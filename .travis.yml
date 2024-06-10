@@ -24,7 +24,7 @@ before_install:
 install: cargo install --path .
 before_deploy:
       - LONG_IMAGE_NAME=${REGISTRY_SERVER}/${REGISTRY_NAMESPACE}/${SHORT_IMAGE_NAME}:${TRAVIS_COMMIT:0:7}
-      - docker build -t LONG_IMAGE_NAME -t latest .
+      - docker build -t $LONG_IMAGE_NAME -t latest .
       - echo "${REGISTRY_PASSWORD}" | docker login --username ${REGISTRY_USERNAME} --password-stdin ${REGISTRY_SERVER}
 deploy:
   - provider: script

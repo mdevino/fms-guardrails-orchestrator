@@ -1,25 +1,31 @@
 generation:
-    provider: tgis # tgis or nlp
-    service:
-        hostname: localhost
-        port: 8033
+  provider: tgis
+  service:
+    hostname: localhost
+    port: 8034
 chunkers:
-    en_regex:
-        type: sentence
-        service:
-            hostname: localhost
-            port: 8085
-            tls: caikit
+  sentence_syntax_izumo_en_stock_chunker:
+    type: sentence
+    service:
+      hostname: localhost
+      port: 8085
 detectors:
-    hap-en:
-        service:
-            hostname: https://localhost/api/v1/text/contents # full url / endpoint currently expected
-            port: 8080
-            tls: caikit
-        chunker_id: en_regex
-        default_threshold: 0.5
-tls:
-    caikit:
-        cert_path: /path/to/tls.crt
-        key_path: /path/to/tls.key
-        client_ca_cert_path: /path/to/ca.crt
+  en_syntax_rbr_pii:
+    service:
+      hostname: https://brl-pii-fmaas-tuning.apps.fmaas-devstage-backend.fmaas.res.ibm.com/api/v1/text/contents
+      port: 443
+    chunker_id: sentence_syntax_izumo_en_stock_chunker
+    default_threshold: 0.8
+  en_syntax_slate.38m.hap:
+    service:
+      hostname: https://brl-hap-fmaas-tuning.apps.fmaas-devstage-backend.fmaas.res.ibm.com/api/v1/text/contents
+      port: 443
+    chunker_id: sentence_syntax_izumo_en_stock_chunker
+    default_threshold: 0.5
+  en_syntax_slate_38m_hap:
+    service:
+      hostname: https://brl-hap-fmaas-tuning.apps.fmaas-devstage-backend.fmaas.res.ibm.com/api/v1/text/contents
+      port: 443
+    chunker_id: sentence_syntax_izumo_en_stock_chunker
+    default_threshold: 0.5
+tls: {}

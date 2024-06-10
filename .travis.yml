@@ -1,0 +1,30 @@
+language: rust
+rust:
+  - 1.77.2
+vm: 
+  size: 2x-large
+services:
+  - docker
+cache: cargo
+if: branch = main OR type = pull_request
+env:
+  global:
+    - REGISTRY_SERVER=us.icr.io
+    - REGISTRY_NAMESPACE=cil15-shared-registry
+    - PYTHONPATH=${TRAVIS_BUILD_DIR}/detectors
+    - SHORT_IMAGE_NAME=fms-orchestr8
+install: cargo build --path .
+before_script: 
+  - cargo test
+script: cargo build --path .
+before_deploy:
+      - LONG_IMAGE_NAME=${REGISTRY_SERVER}/${REGISTRY_NAMESPACE}/${SHORT_IMAGE_NAME}:${TRAVIS_COMMIT:0:7}
+      - echo "${REGISTRY_PASSWORD}" | docker login --username ${REGISTRY_USERNAME} --password-stdin ${REGISTRY_SERVER}
+      - docker build -t LONG_IMAGE_NAME .
+      # - docker push ${REGISTRY_SERVER}/${REGISTRY_NAMESPACE}/${SHORT_IMAGE_NAME}:latest
+deploy:
+  - provider: script
+    skip_cleanup: true
+    script: echo "Yay!"
+    on:
+      branch: main

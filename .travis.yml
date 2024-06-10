@@ -12,7 +12,14 @@ env:
     - REGISTRY_SERVER=us.icr.io
     - REGISTRY_NAMESPACE=cil15-shared-registry
     - PYTHONPATH=${TRAVIS_BUILD_DIR}/detectors
-before_install: sudo apt update && sudo apt install -y protobuf-compiler build-essential
+    - PROTOC_VERSION=3.19.6
+before_install: 
+      - sudo apt update && sudo apt install -y build-essential
+      - PROTOC_ZIP=protoc-${PROTOC_VERSION}-linux-x86_64.zip
+      - curl -OL https://github.com/protocolbuffers/protobuf/releases/download/v3.19.6/$PROTOC_ZIP
+      - sudo unzip -o $PROTOC_ZIP -d /usr/local bin/protoc
+      - sudo unzip -o $PROTOC_ZIP -d /usr/local 'include/*'
+      - rm -f $PROTOC_ZIP
 before_deploy:
       - LONG_IMAGE_NAME=${REGISTRY_SERVER}/${REGISTRY_NAMESPACE}/${SHORT_IMAGE_NAME}:${TRAVIS_COMMIT:0:7}
       - echo "${REGISTRY_PASSWORD}" | docker login --username ${REGISTRY_USERNAME} --password-stdin ${REGISTRY_SERVER}

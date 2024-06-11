@@ -22,9 +22,10 @@ env:
 #       - chmod +x ./rust-init.sh
 #       - ./rust-init.sh -y
 #       - . ~/.bashrc
-#       - git clone https://github.com/foundation-model-stack/fms-guardrails-orchestrator.git orchestrator
-#       - cd orchestrator
+
 install:
+      - git clone https://github.com/foundation-model-stack/fms-guardrails-orchestrator.git orchestrator
+      - cd orchestrator
       - LONG_IMAGE_NAME=${REGISTRY_SERVER}/${REGISTRY_NAMESPACE}/${SHORT_IMAGE_NAME}:${TRAVIS_COMMIT:0:7}
       - docker build -qt $LONG_IMAGE_NAME -t latest .
 before_deploy:

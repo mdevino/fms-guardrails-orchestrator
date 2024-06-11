@@ -1,4 +1,4 @@
-language: rust
+language: minimal
 rust:
   - 1.77.2
 vm: 
@@ -15,12 +15,17 @@ env:
     - PROTOC_VERSION=3.19.6
     - SHORT_IMAGE_NAME=fms-guardrails-orchestr8
 before_install: 
-      - sudo apt update && sudo apt install -y build-essential
+      - sudo apt update && sudo apt install -y build-essential 
       - PROTOC_ZIP=protoc-${PROTOC_VERSION}-linux-x86_64.zip
       - curl -OL https://github.com/protocolbuffers/protobuf/releases/download/v3.19.6/$PROTOC_ZIP
       - sudo unzip -o $PROTOC_ZIP -d /usr/local bin/protoc
       - sudo unzip -o $PROTOC_ZIP -d /usr/local 'include/*'
       - rm -f $PROTOC_ZIP
+      - curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs > rustup-init.sh
+      - chmod +x ./rust-init.sh
+      - ./rust-init.sh --yes
+      - git clone https://github.com/foundation-model-stack/fms-guardrails-orchestrator.git orchestrator
+      - cd orchestrator
 install: cargo install --path .
 before_deploy:
       - LONG_IMAGE_NAME=${REGISTRY_SERVER}/${REGISTRY_NAMESPACE}/${SHORT_IMAGE_NAME}:${TRAVIS_COMMIT:0:7}
@@ -29,6 +34,6 @@ before_deploy:
 deploy:
   - provider: script
     skip_cleanup: true
-    script: docker push $LONG_IMAGE_NAME # docker push --all-tags ${REGISTRY_SERVER}/${REGISTRY_NAMESPACE}/${SHORT_IMAGE_NAME}:latest
+    script: docker push --all-tags ${REGISTRY_SERVER}/${REGISTRY_NAMESPACE}/${SHORT_IMAGE_NAME}:latest
     on:
       branch: main

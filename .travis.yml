@@ -13,8 +13,7 @@ install:
       - git clone https://github.com/foundation-model-stack/fms-guardrails-orchestrator.git orchestrator
       - cd orchestrator
       - COMMIT=$(git ls-remote https://github.com/foundation-model-stack/fms-guardrails-orchestrator.git refs/heads/main | cut -f 1)
-      - LONG_IMAGE_NAME=${REGISTRY_SERVER}/${REGISTRY_NAMESPACE}/${SHORT_IMAGE_NAME}:${COMMIT:0:7}
-      - LATEST_IMAGE_TAG=${REGISTRY_SERVER}/${REGISTRY_NAMESPACE}/${SHORT_IMAGE_NAME}:latest
-      - docker build -t $LONG_IMAGE_NAME -t $LATEST_IMAGE_TAG .
+      - LONG_IMAGE_NAME=${REGISTRY_SERVER}/${REGISTRY_NAMESPACE}/${SHORT_IMAGE_NAME}
+      - docker build -t $LONG_IMAGE_NAME:${COMMIT:0:7} -t $LONG_IMAGE_NAME:latest .
       - echo "${REGISTRY_PASSWORD}" | docker login --username ${REGISTRY_USERNAME} --password-stdin ${REGISTRY_SERVER}
-      - docker push --all-tags ${LATEST_IMAGE_TAG}
+      - docker push --all-tags ${LONG_IMAGE_NAME}

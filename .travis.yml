@@ -1,6 +1,4 @@
 language: minimal
-rust:
-  - 1.77.2
 vm: 
   size: 2x-large
 services:
@@ -34,6 +32,6 @@ before_deploy:
 deploy:
   - provider: script
     skip_cleanup: true
-    script: docker push --all-tags ${REGISTRY_SERVER}/${REGISTRY_NAMESPACE}/${SHORT_IMAGE_NAME}:latest
+    script: echo "Hello!" # docker push --all-tags ${REGISTRY_SERVER}/${REGISTRY_NAMESPACE}/${SHORT_IMAGE_NAME}:latest
     on:
       branch: main

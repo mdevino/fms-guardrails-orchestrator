@@ -21,7 +21,7 @@ before_install:
       - rm -f $PROTOC_ZIP
       - curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs > rust-init.sh
       - chmod +x ./rust-init.sh
-      - ./rust-init.sh --yes
+      - ./rust-init.sh -y
       - git clone https://github.com/foundation-model-stack/fms-guardrails-orchestrator.git orchestrator
       - cd orchestrator
 install: cargo install --path .

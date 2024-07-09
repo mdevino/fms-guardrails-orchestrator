@@ -44,7 +44,8 @@ use crate::{
     config::OrchestratorConfig,
     models,
     orchestrator::{
-        self, ClassificationWithGenTask, Orchestrator, StreamingClassificationWithGenTask,
+        self, ClassificationWithGenTask, GenerationWithDetectionTask, Orchestrator,
+        StreamingClassificationWithGenTask,
     },
 };
 
@@ -275,12 +276,20 @@ async fn classification_with_gen(
 }
 
 async fn generation_with_detection(
-    State(_state): State<Arc<ServerState>>,
-    Json(_request): Json<models::GenerationWithDetectionHttpRequest>,
-) -> Result<impl IntoResponse, ()> {
-    let mut response = HashMap::new();
-    response.insert("status", "Success!");
-    Ok(Json(response).into_response())
+    State(state): State<Arc<ServerState>>,
+    Json(request): Json<models::GenerationWithDetectionHttpRequest>,
+) -> Result<impl IntoResponse, Error> {
+    let request_id = Uuid::new_v4();
+    request.validate()?;
+    let task = GenerationWithDetectionTask::new(request_id, request);
+    match state
+        .orchestrator
+        .handle_generation_with_detection(task)
+        .await
+    {
+        Ok(response) => Ok(Json(response).into_response()),
+        Err(error) => Err(error.into()),
+    }
 }
 
 async fn stream_classification_with_gen(

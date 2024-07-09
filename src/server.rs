@@ -140,6 +140,10 @@ pub async fn run(
             post(classification_with_gen),
         )
         .route(
+            &format!("{}/generation-detection", API_PREFIX),
+            post(generation_with_detection),
+        )
+        .route(
             &format!(
                 "{}/server-streaming-classification-with-text-generation",
                 API_PREFIX
@@ -268,6 +272,15 @@ async fn classification_with_gen(
         Ok(response) => Ok(Json(response).into_response()),
         Err(error) => Err(error.into()),
     }
+}
+
+async fn generation_with_detection(
+    State(_state): State<Arc<ServerState>>,
+    Json(_request): Json<models::GenerationWithDetectionHttpRequest>,
+) -> Result<impl IntoResponse, ()> {
+    let mut response = HashMap::new();
+    response.insert("status", "Success!");
+    Ok(Json(response).into_response())
 }
 
 async fn stream_classification_with_gen(

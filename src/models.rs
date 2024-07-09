@@ -51,22 +51,6 @@ pub struct GuardrailsHttpRequest {
     pub text_gen_parameters: Option<GuardrailsTextGenerationParameters>,
 }
 
-#[derive(Clone, Debug, serde::Serialize, serde::Deserialize)]
-pub struct GenerationWithDetectionHttpRequest {
-    #[serde(rename = "model_id")]
-    pub model_id: String,
-
-    #[serde(rename = "prompt")]
-    pub prompt: String,
-
-    #[serde(rename = "detectors")]
-    pub detectors: HashMap<String, DetectorParams>,
-
-    #[serde(rename = "text_gen_parameters")]
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub text_gen_parameters: Option<GuardrailsTextGenerationParameters>,
-}
-
 #[derive(Debug, thiserror::Error)]
 pub enum ValidationError {
     #[error("`{0}` is required")]
@@ -102,6 +86,35 @@ impl GuardrailsHttpRequest {
     }
 }
 
+#[derive(Clone, Debug, serde::Serialize, serde::Deserialize)]
+pub struct GenerationWithDetectionHttpRequest {
+    #[serde(rename = "model_id")]
+    pub model_id: String,
+
+    #[serde(rename = "prompt")]
+    pub prompt: String,
+
+    #[serde(rename = "detectors")]
+    pub detectors: HashMap<String, DetectorParams>,
+
+    #[serde(rename = "text_gen_parameters")]
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub text_gen_parameters: Option<GuardrailsTextGenerationParameters>,
+}
+
+impl GenerationWithDetectionHttpRequest {
+    /// Upfront validation of user request
+    pub fn validate(&self) -> Result<(), ValidationError> {
+        // Validate required parameters
+        if self.model_id.is_empty() {
+            return Err(ValidationError::Required("model_id".into()));
+        }
+        if self.prompt.is_empty() {
+            return Err(ValidationError::Required("prompt".into()));
+        }
+        Ok(())
+    }
+}
 /// Configuration of guardrails models for either or both input to a text generation model
 /// (e.g. user prompt) and output of a text generation model
 #[derive(Default, Debug, Clone, PartialEq, serde::Serialize, serde::Deserialize)]
@@ -329,6 +342,22 @@ pub struct ClassifiedGeneratedTextResult {
     pub input_tokens: Option<Vec<GeneratedToken>>,
 }
 
+#[derive(Default, Debug, Clone, PartialEq, serde::Serialize, serde::Deserialize)]
+pub struct GenerationWithDetectionResult {
+    /// Generated text
+    #[serde(rename = "generated_text")]
+    pub generated_text: Option<String>,
+
+    /// Classification results for input to text generation model and/or
+    /// output from the text generation model
+    #[serde(rename = "detections")]
+    pub detections: Vec<DetectionResult>,
+
+    /// Length of input
+    #[serde(rename = "input_token_count")]
+    pub input_token_count: u32,
+}
+
 /// Streaming classification result on text produced by a text generation model, containing
 /// information from the original text generation output as well as the result of
 /// classification on the generated text. Also indicates where in stream is processed.
@@ -440,6 +469,18 @@ pub struct TokenClassificationResult {
     #[serde(rename = "token_count")]
     #[serde(skip_serializing_if = "Option::is_none")]
     pub token_count: Option<u32>,
+}
+
+#[derive(Debug, Clone, PartialEq, serde::Serialize, serde::Deserialize)]
+pub struct DetectionResult {
+    #[serde(rename = "detection_type")]
+    pub detection_type: String,
+
+    #[serde(rename = "detection")]
+    pub detection: String,
+
+    #[serde(rename = "score")]
+    pub score: f64,
 }
 
 /// Enumeration of reasons why text generation stopped

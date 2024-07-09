@@ -24,14 +24,15 @@ use futures::{
 use tracing::{debug, error, info};
 
 use super::{
-    apply_masks, get_chunker_ids, Chunk, ClassificationWithGenTask, Context, Error, Orchestrator,
+    apply_masks, get_chunker_ids, Chunk, ClassificationWithGenTask, Context, Error,
+    GenerationWithDetectionTask, Orchestrator,
 };
 use crate::{
     clients::detector::ContentAnalysisRequest,
     models::{
-        ClassifiedGeneratedTextResult, DetectorParams, GuardrailsTextGenerationParameters,
-        InputWarning, InputWarningReason, TextGenTokenClassificationResults,
-        TokenClassificationResult,
+        ClassifiedGeneratedTextResult, DetectorParams, GenerationWithDetectionResult,
+        GuardrailsTextGenerationParameters, InputWarning, InputWarningReason,
+        TextGenTokenClassificationResults, TokenClassificationResult,
     },
     orchestrator::UNSUITABLE_INPUT_MESSAGE,
     pb::caikit::runtime::chunkers,
@@ -127,6 +128,15 @@ impl Orchestrator {
                 Err(error)
             }
         }
+    }
+
+    pub async fn handle_generation_with_detection(
+        &self,
+        _task: GenerationWithDetectionTask,
+    ) -> Result<GenerationWithDetectionResult, Error> {
+        Ok(GenerationWithDetectionResult {
+            ..Default::default()
+        })
     }
 }
 

@@ -51,6 +51,22 @@ pub struct GuardrailsHttpRequest {
     pub text_gen_parameters: Option<GuardrailsTextGenerationParameters>,
 }
 
+#[derive(Clone, Debug, serde::Serialize, serde::Deserialize)]
+pub struct GenerationWithDetectionHttpRequest {
+    #[serde(rename = "model_id")]
+    pub model_id: String,
+
+    #[serde(rename = "prompt")]
+    pub prompt: String,
+
+    #[serde(rename = "detectors")]
+    pub detectors: HashMap<String, DetectorParams>,
+
+    #[serde(rename = "text_gen_parameters")]
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub text_gen_parameters: Option<GuardrailsTextGenerationParameters>,
+}
+
 #[derive(Debug, thiserror::Error)]
 pub enum ValidationError {
     #[error("`{0}` is required")]

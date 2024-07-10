@@ -132,9 +132,20 @@ impl Orchestrator {
 
     pub async fn handle_generation_with_detection(
         &self,
-        _task: GenerationWithDetectionTask,
+        task: GenerationWithDetectionTask,
     ) -> Result<GenerationWithDetectionResult, Error> {
+        let ctx = self.ctx.clone();
+        let /*mut*/ generation_results = generate(
+            &ctx,
+            task.model_id.clone(),
+            task.prompt.clone(),
+            task.text_gen_parameters.clone(),
+        )
+        .await?;
+        debug!(?generation_results);
         Ok(GenerationWithDetectionResult {
+            generated_text: generation_results.generated_text,
+            input_token_count: generation_results.input_token_count,
             ..Default::default()
         })
     }

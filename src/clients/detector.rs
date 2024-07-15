@@ -48,11 +48,30 @@ impl DetectorClient {
             .clone())
     }
 
+    // TODO: Use generics here, since the only thing that changes is "request" parameter and return types?
     pub async fn text_contents(
         &self,
         model_id: &str,
         request: ContentAnalysisRequest,
     ) -> Result<Vec<Vec<ContentAnalysisResponse>>, Error> {
+        let client = self.client(model_id)?;
+        let url = client.base_url().as_str();
+        let response = client
+            .post(url)
+            .header(DETECTOR_ID_HEADER_NAME, model_id)
+            .json(&request)
+            .send()
+            .await?
+            .json()
+            .await?;
+        Ok(response)
+    }
+
+    pub async fn generation_detection(
+        &self,
+        model_id: &str,
+        request: GenerationDetectionRequest,
+    ) -> Result<Vec<GenerationDetectionResponse>, Error> {
         let client = self.client(model_id)?;
         let url = client.base_url().as_str();
         let response = client
@@ -79,6 +98,22 @@ pub struct ContentAnalysisRequest {
 impl ContentAnalysisRequest {
     pub fn new(contents: Vec<String>) -> ContentAnalysisRequest {
         ContentAnalysisRequest { contents }
+    }
+}
+
+#[derive(Clone, Debug, Serialize, Deserialize, PartialEq)]
+pub struct GenerationDetectionRequest {
+    /// Field allowing users to provide list of documents for analysis
+    pub prompt: String,
+    pub generated_text: String,
+}
+
+impl GenerationDetectionRequest {
+    pub fn new(prompt: String, generated_text: String) -> Self {
+        Self {
+            prompt,
+            generated_text,
+        }
     }
 }
 
@@ -138,6 +173,26 @@ impl From<ContentAnalysisResponse> for crate::models::TokenClassificationResult 
             entity_group: value.detection_type,
             score: value.score,
             token_count: None,
+        }
+    }
+}
+
+#[derive(Clone, Debug, Serialize, Deserialize, PartialEq)]
+pub struct GenerationDetectionResponse {
+    /// Relevant detection class
+    pub detection: String,
+    /// Detection type or aggregate detection label
+    pub detection_type: String,
+    /// Score of detection
+    pub score: f64,
+}
+
+impl From<GenerationDetectionResponse> for crate::models::DetectionResult {
+    fn from(value: GenerationDetectionResponse) -> Self {
+        Self {
+            detection: value.detection,
+            detection_type: value.detection_type,
+            score: value.score,
         }
     }
 }

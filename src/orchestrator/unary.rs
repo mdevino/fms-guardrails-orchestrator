@@ -28,11 +28,11 @@ use super::{
     GenerationWithDetectionTask, Orchestrator,
 };
 use crate::{
-    clients::detector::ContentAnalysisRequest,
+    clients::detector::{ContentAnalysisRequest, GenerationDetectionRequest},
     models::{
-        ClassifiedGeneratedTextResult, DetectorParams, GenerationWithDetectionResult,
-        GuardrailsTextGenerationParameters, InputWarning, InputWarningReason,
-        TextGenTokenClassificationResults, TokenClassificationResult,
+        ClassifiedGeneratedTextResult, DetectionResult, DetectorParams,
+        GenerationWithDetectionResult, GuardrailsTextGenerationParameters, InputWarning,
+        InputWarningReason, TextGenTokenClassificationResults, TokenClassificationResult,
     },
     orchestrator::UNSUITABLE_INPUT_MESSAGE,
     pb::caikit::runtime::chunkers,
@@ -134,20 +134,69 @@ impl Orchestrator {
         &self,
         task: GenerationWithDetectionTask,
     ) -> Result<GenerationWithDetectionResult, Error> {
-        let ctx = self.ctx.clone();
-        let /*mut*/ generation_results = generate(
-            &ctx,
-            task.model_id.clone(),
-            task.prompt.clone(),
-            task.text_gen_parameters.clone(),
-        )
-        .await?;
-        debug!(?generation_results);
-        Ok(GenerationWithDetectionResult {
-            generated_text: generation_results.generated_text,
-            input_token_count: generation_results.input_token_count,
-            ..Default::default()
-        })
+        info!(
+            request_id = ?task.request_id,
+            model_id = %task.model_id,
+            detectors = ?task.detectors,
+            "handling generation unary task"
+        );
+        let task_handle = tokio::spawn(async move {
+            let ctx = self.ctx.clone();
+            let generation_results = generate(
+                &ctx,
+                task.model_id.clone(),
+                task.prompt.clone(),
+                task.text_gen_parameters.clone(),
+            )
+            .await?;
+
+            // call detection
+            let detections = task
+                .detectors
+                .iter()
+                .map(|(detector_id, detector_params)| async {
+                    detect_for_generation(
+                        &ctx,
+                        detector_id,
+                        detector_params,
+                        &task.prompt,
+                        &generation_results.generated_text.unwrap_or_default(),
+                    )
+                    .await
+                })
+                .flatten()
+                .collect();
+            // let detections = detect_for_generation(
+            //     &ctx,
+            //     task.model_id.clone(),
+            //     task.detectors,
+            //     task.prompt.clone(),
+            //     generation_results.generated_text.clone(),
+            // )
+            // .await?;
+
+            debug!(?generation_results);
+            Ok(GenerationWithDetectionResult {
+                generated_text: generation_results.generated_text,
+                input_token_count: generation_results.input_token_count,
+                detections,
+            })
+        });
+        match task_handle.await {
+            // Task completed successfully
+            Ok(Ok(result)) => Ok(result),
+            // Task failed, return error propagated from child task that failed
+            Ok(Err(error)) => {
+                error!(request_id = ?task.request_id, %error, "generation unary task failed");
+                Err(error)
+            }
+            // Task cancelled or panicked
+            Err(error) => {
+                let error = error.into();
+                error!(request_id = ?task.request_id, %error, "generation unary task failed");
+                Err(error)
+            }
+        }
     }
 }
 
@@ -283,6 +332,45 @@ pub async fn detect(
         })
         .collect::<Vec<_>>();
     Ok::<Vec<TokenClassificationResult>, Error>(results)
+}
+
+pub async fn detect_for_generation(
+    ctx: &Arc<Context>,
+    detector_id: &String,
+    detector_params: &DetectorParams,
+    prompt: &String,
+    generated_text: &String,
+) -> Result<Vec<DetectionResult>, Error> {
+    let detector_id = detector_id.clone();
+    let _threshold = detector_params.threshold.unwrap_or(
+        detector_params.threshold.unwrap_or(
+            ctx.config
+                .detectors
+                .get(&detector_id)
+                .ok_or_else(|| Error::DetectorNotFound {
+                    detector_id: detector_id.clone(),
+                })?
+                .default_threshold,
+        ),
+    );
+    let request = GenerationDetectionRequest::new(prompt.clone(), generated_text.clone());
+    debug!(%detector_id, ?request, "sending detector request");
+    let response = ctx
+        .detector_client
+        .generation_detection(&detector_id, request)
+        .await
+        .map(|results| {
+            results
+                .into_iter()
+                .map(|result| DetectionResult::from(result))
+                .collect()
+        })
+        .map_err(|error| Error::DetectorRequestFailed {
+            detector_id: detector_id.clone(),
+            error,
+        })?;
+    debug!(%detector_id, ?response, "received detector response");
+    Ok::<Vec<DetectionResult>, Error>(response)
 }
 
 /// Sends request to chunker service.

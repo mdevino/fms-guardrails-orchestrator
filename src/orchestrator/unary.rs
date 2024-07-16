@@ -140,8 +140,8 @@ impl Orchestrator {
             detectors = ?task.detectors,
             "handling generation unary task"
         );
+        let ctx = self.ctx.clone();
         let task_handle = tokio::spawn(async move {
-            let ctx = self.ctx.clone();
             let generation_results = generate(
                 &ctx,
                 task.model_id.clone(),
@@ -151,21 +151,35 @@ impl Orchestrator {
             .await?;
 
             // call detection
-            let detections = task
-                .detectors
-                .iter()
-                .map(|(detector_id, detector_params)| async {
-                    detect_for_generation(
-                        &ctx,
-                        detector_id,
-                        detector_params,
-                        &task.prompt,
-                        &generation_results.generated_text.unwrap_or_default(),
-                    )
-                    .await
-                })
-                .flatten()
-                .collect();
+            let detections = try_join_all(
+                task.detectors
+                    .iter()
+                    .map(|(detector_id, detector_params)| {
+                        let ctx = ctx.clone();
+                        let detector_id = detector_id.clone();
+                        let detector_params = detector_params.clone();
+                        let prompt = task.prompt.clone();
+                        let generated_text = generation_results
+                            .generated_text
+                            .clone()
+                            .unwrap_or_default();
+                        async {
+                            detect_for_generation(
+                                ctx,
+                                detector_id,
+                                detector_params,
+                                prompt,
+                                generated_text,
+                            )
+                            .await
+                        }
+                    })
+                    .collect::<Vec<_>>(),
+            )
+            .await?
+            .into_iter()
+            .flatten()
+            .collect::<Vec<_>>();
             // let detections = detect_for_generation(
             //     &ctx,
             //     task.model_id.clone(),
@@ -335,14 +349,14 @@ pub async fn detect(
 }
 
 pub async fn detect_for_generation(
-    ctx: &Arc<Context>,
-    detector_id: &String,
-    detector_params: &DetectorParams,
-    prompt: &String,
-    generated_text: &String,
+    ctx: Arc<Context>,
+    detector_id: String,
+    detector_params: DetectorParams,
+    prompt: String,
+    generated_text: String,
 ) -> Result<Vec<DetectionResult>, Error> {
     let detector_id = detector_id.clone();
-    let _threshold = detector_params.threshold.unwrap_or(
+    let threshold = detector_params.threshold.unwrap_or(
         detector_params.threshold.unwrap_or(
             ctx.config
                 .detectors
@@ -362,7 +376,8 @@ pub async fn detect_for_generation(
         .map(|results| {
             results
                 .into_iter()
-                .map(|result| DetectionResult::from(result))
+                .filter(|detection| detection.score > threshold)
+                .map(DetectionResult::from)
                 .collect()
         })
         .map_err(|error| Error::DetectorRequestFailed {

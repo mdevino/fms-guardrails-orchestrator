@@ -478,10 +478,10 @@ mod tests {
     use super::*;
     use crate::{
         clients::{
-            detector::ContentAnalysisResponse, ChunkerClient, DetectorClient, GenerationClient,
-            TgisClient,
+            detector::{ContentAnalysisResponse, GenerationDetectionResponse},
+            ChunkerClient, DetectorClient, GenerationClient, TgisClient,
         },
-        config::OrchestratorConfig,
+        config::{DetectorConfig, OrchestratorConfig},
         models::FinishReason,
         pb::fmaas::{
             BatchedGenerationRequest, BatchedGenerationResponse, GenerationRequest,
@@ -641,6 +641,115 @@ mod tests {
                 threshold,
                 detector_params,
                 chunks
+            )
+            .await
+            .unwrap(),
+            expected_response
+        );
+    }
+
+    /// This test checks if calls to detectors for the /generation-detection endpoint are being handled appropriately.
+    #[tokio::test]
+    async fn test_detect_for_generation() {
+        let mock_generation_client = GenerationClient::tgis(TgisClient::faux());
+        let mut mock_detector_client = DetectorClient::faux();
+
+        let detector_id = "mocked_answer_relevance_detector";
+        let threshold = 0.5;
+        let prompt = "What is the capital of Brazil?".to_string();
+        let generated_text = "The capital of Brazil is Brasilia.".to_string();
+        let detector_params = DetectorParams {
+            threshold: Some(threshold),
+        };
+
+        let expected_response: Vec<DetectionResult> = vec![DetectionResult {
+            detection_type: "relevance".to_string(),
+            detection: "is_relevant".to_string(),
+            score: 0.9,
+        }];
+
+        faux::when!(mock_detector_client.generation_detection(
+            detector_id,
+            GenerationDetectionRequest::new(prompt.clone(), generated_text.clone())
+        ))
+        .once()
+        .then_return(Ok(vec![GenerationDetectionResponse {
+            detection_type: "relevance".to_string(),
+            detection: "is_relevant".to_string(),
+            score: 0.9,
+        }]));
+
+        let mut ctx: Context =
+            get_test_context(mock_generation_client, None, Some(mock_detector_client)).await;
+
+        // add detector
+        ctx.config.detectors.insert(
+            detector_id.to_string(),
+            DetectorConfig {
+                ..Default::default()
+            },
+        );
+
+        assert_eq!(
+            detect_for_generation(
+                ctx.into(),
+                detector_id.to_string(),
+                detector_params,
+                prompt,
+                generated_text
+            )
+            .await
+            .unwrap(),
+            expected_response
+        );
+    }
+
+    /// This test checks if calls to detectors for the /generation-detection endpoint only return detections above the threshold.
+    #[tokio::test]
+    async fn test_detect_for_generation_below_threshold() {
+        let mock_generation_client = GenerationClient::tgis(TgisClient::faux());
+        let mut mock_detector_client = DetectorClient::faux();
+
+        let detector_id = "mocked_answer_relevance_detector";
+        let threshold = 0.5;
+        let prompt = "What is the capital of Brazil?".to_string();
+        let generated_text =
+            "The most beautiful places can be found in Rio de Janeiro.".to_string();
+        let detector_params = DetectorParams {
+            threshold: Some(threshold),
+        };
+
+        let expected_response: Vec<DetectionResult> = vec![];
+
+        faux::when!(mock_detector_client.generation_detection(
+            detector_id,
+            GenerationDetectionRequest::new(prompt.clone(), generated_text.clone())
+        ))
+        .once()
+        .then_return(Ok(vec![GenerationDetectionResponse {
+            detection_type: "relevance".to_string(),
+            detection: "is_relevant".to_string(),
+            score: 0.1,
+        }]));
+
+        let mut ctx: Context =
+            get_test_context(mock_generation_client, None, Some(mock_detector_client)).await;
+
+        // add mocked detector
+        ctx.config.detectors.insert(
+            detector_id.to_string(),
+            DetectorConfig {
+                ..Default::default()
+            },
+        );
+
+        assert_eq!(
+            detect_for_generation(
+                ctx.into(),
+                detector_id.to_string(),
+                detector_params,
+                prompt,
+                generated_text
             )
             .await
             .unwrap(),

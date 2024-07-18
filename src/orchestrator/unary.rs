@@ -180,14 +180,6 @@ impl Orchestrator {
             .into_iter()
             .flatten()
             .collect::<Vec<_>>();
-            // let detections = detect_for_generation(
-            //     &ctx,
-            //     task.model_id.clone(),
-            //     task.detectors,
-            //     task.prompt.clone(),
-            //     generation_results.generated_text.clone(),
-            // )
-            // .await?;
 
             debug!(?generation_results);
             Ok(GenerationWithDetectionResult {

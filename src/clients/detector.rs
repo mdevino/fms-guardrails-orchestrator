@@ -48,7 +48,8 @@ impl DetectorClient {
             .clone())
     }
 
-    // TODO: Use generics here, since the only thing that changes is "request" parameter and return types?
+    // TODO: Use generics here, since the only thing that changes in comparison to generation_detection()
+    // is the "request" parameter and return types?
     pub async fn text_contents(
         &self,
         model_id: &str,
@@ -67,6 +68,7 @@ impl DetectorClient {
         Ok(response)
     }
 
+    /// Invokes detectors compatible with the `/api/v1/text/task/generation-detection` endpoint
     pub async fn generation_detection(
         &self,
         model_id: &str,
@@ -101,11 +103,15 @@ impl ContentAnalysisRequest {
     }
 }
 
+/// A struct representing a request to a detector compatible with the
+/// /api/v1/text/task/generation-detection endpoint.
 #[cfg_attr(test, derive(PartialEq))]
 #[derive(Debug, Serialize)]
 pub struct GenerationDetectionRequest {
-    /// Field allowing users to provide list of documents for analysis
+    /// User prompt sent to LLM
     pub prompt: String,
+
+    /// Text generated from an LLM
     pub generated_text: String,
 }
 

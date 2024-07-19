@@ -178,12 +178,22 @@ impl ClassificationWithGenTask {
     }
 }
 
+/// Task for the /api/v1/text/task/generation-detection endpoint
 #[derive(Debug)]
 pub struct GenerationWithDetectionTask {
+    /// Request unique identifier
     pub request_id: Uuid,
+
+    /// Model ID of the LLM
     pub model_id: String,
+
+    /// User prompt to be sent to the LLM
     pub prompt: String,
+
+    /// Detectors configuration
     pub detectors: HashMap<String, DetectorParams>,
+
+    /// LLM Parameters
     pub text_gen_parameters: Option<GuardrailsTextGenerationParameters>,
 }
 

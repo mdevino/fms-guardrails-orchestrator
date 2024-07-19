@@ -130,6 +130,7 @@ impl Orchestrator {
         }
     }
 
+    /// Handles the given generation task, followed by detections.
     pub async fn handle_generation_with_detection(
         &self,
         task: GenerationWithDetectionTask,
@@ -340,6 +341,7 @@ pub async fn detect(
     Ok::<Vec<TokenClassificationResult>, Error>(results)
 }
 
+/// Calls a detector compatible with the /api/v1/text/task/generation-detection endpoint
 pub async fn detect_for_generation(
     ctx: Arc<Context>,
     detector_id: String,
@@ -360,7 +362,7 @@ pub async fn detect_for_generation(
         ),
     );
     let request = GenerationDetectionRequest::new(prompt.clone(), generated_text.clone());
-    debug!(%detector_id, ?request, "sending detector request");
+    debug!(%detector_id, ?request, "sending generation detector request");
     let response = ctx
         .detector_client
         .generation_detection(&detector_id, request)
@@ -375,7 +377,7 @@ pub async fn detect_for_generation(
             detector_id: detector_id.clone(),
             error,
         })?;
-    debug!(%detector_id, ?response, "received detector response");
+    debug!(%detector_id, ?response, "received generation detector response");
     Ok::<Vec<DetectionResult>, Error>(response)
 }
 

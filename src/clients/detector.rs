@@ -101,7 +101,8 @@ impl ContentAnalysisRequest {
     }
 }
 
-#[derive(Clone, Debug, Serialize, Deserialize, PartialEq)]
+#[cfg_attr(test, derive(PartialEq))]
+#[derive(Debug, Serialize)]
 pub struct GenerationDetectionRequest {
     /// Field allowing users to provide list of documents for analysis
     pub prompt: String,

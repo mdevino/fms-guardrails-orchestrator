@@ -20,7 +20,7 @@ use std::collections::HashMap;
 use serde::{Deserialize, Serialize};
 
 use super::{create_http_clients, Error, HttpClient};
-use crate::config::ServiceConfig;
+use crate::{config::ServiceConfig, models::DetectionResult};
 
 const DETECTOR_ID_HEADER_NAME: &str = "detector-id";
 
@@ -71,7 +71,7 @@ impl DetectorClient {
         &self,
         model_id: &str,
         request: GenerationDetectionRequest,
-    ) -> Result<Vec<GenerationDetectionResponse>, Error> {
+    ) -> Result<Vec<DetectionResult>, Error> {
         let client = self.client(model_id)?;
         let url = client.base_url().as_str();
         let response = client
@@ -174,26 +174,6 @@ impl From<ContentAnalysisResponse> for crate::models::TokenClassificationResult 
             entity_group: value.detection_type,
             score: value.score,
             token_count: None,
-        }
-    }
-}
-
-#[derive(Clone, Debug, Serialize, Deserialize, PartialEq)]
-pub struct GenerationDetectionResponse {
-    /// Relevant detection class
-    pub detection: String,
-    /// Detection type or aggregate detection label
-    pub detection_type: String,
-    /// Score of detection
-    pub score: f64,
-}
-
-impl From<GenerationDetectionResponse> for crate::models::DetectionResult {
-    fn from(value: GenerationDetectionResponse) -> Self {
-        Self {
-            detection: value.detection,
-            detection_type: value.detection_type,
-            score: value.score,
         }
     }
 }

@@ -183,7 +183,7 @@ impl Orchestrator {
 
             debug!(?generation_results);
             Ok(GenerationWithDetectionResult {
-                generated_text: generation_results.generated_text,
+                generated_text: generation_results.generated_text.unwrap_or_default(),
                 input_token_count: generation_results.input_token_count,
                 detections,
             })

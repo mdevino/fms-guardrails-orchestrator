@@ -369,7 +369,6 @@ pub async fn detect_for_generation(
             results
                 .into_iter()
                 .filter(|detection| detection.score > threshold)
-                .map(DetectionResult::from)
                 .collect()
         })
         .map_err(|error| Error::DetectorRequestFailed {
@@ -470,8 +469,8 @@ mod tests {
     use super::*;
     use crate::{
         clients::{
-            detector::{ContentAnalysisResponse, GenerationDetectionResponse},
-            ChunkerClient, DetectorClient, GenerationClient, TgisClient,
+            detector::ContentAnalysisResponse, ChunkerClient, DetectorClient, GenerationClient,
+            TgisClient,
         },
         config::{DetectorConfig, OrchestratorConfig},
         models::FinishReason,
@@ -665,7 +664,7 @@ mod tests {
             GenerationDetectionRequest::new(prompt.clone(), generated_text.clone())
         ))
         .once()
-        .then_return(Ok(vec![GenerationDetectionResponse {
+        .then_return(Ok(vec![DetectionResult {
             detection_type: "relevance".to_string(),
             detection: "is_relevant".to_string(),
             score: 0.9,
@@ -718,7 +717,7 @@ mod tests {
             GenerationDetectionRequest::new(prompt.clone(), generated_text.clone())
         ))
         .once()
-        .then_return(Ok(vec![GenerationDetectionResponse {
+        .then_return(Ok(vec![DetectionResult {
             detection_type: "relevance".to_string(),
             detection: "is_relevant".to_string(),
             score: 0.1,

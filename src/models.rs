@@ -112,6 +112,9 @@ impl GenerationWithDetectionHttpRequest {
         if self.prompt.is_empty() {
             return Err(ValidationError::Required("prompt".into()));
         }
+        if self.prompt.is_empty() {
+            return Err(ValidationError::Required("detectors".into()));
+        }
         Ok(())
     }
 }
@@ -346,7 +349,7 @@ pub struct ClassifiedGeneratedTextResult {
 pub struct GenerationWithDetectionResult {
     /// Generated text
     #[serde(rename = "generated_text")]
-    pub generated_text: Option<String>,
+    pub generated_text: String,
 
     /// Classification results for input to text generation model and/or
     /// output from the text generation model
@@ -471,6 +474,9 @@ pub struct TokenClassificationResult {
     pub token_count: Option<u32>,
 }
 
+// This is struct does NOT apply to classification endpoints:
+// /api/v1/task/classification-with-text-generation
+// /api/v1/task/server-streaming-classification-with-text-generation
 #[derive(Debug, Clone, PartialEq, serde::Serialize, serde::Deserialize)]
 pub struct DetectionResult {
     #[serde(rename = "detection_type")]

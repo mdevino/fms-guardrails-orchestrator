@@ -139,7 +139,7 @@ impl Orchestrator {
             request_id = ?task.request_id,
             model_id = %task.model_id,
             detectors = ?task.detectors,
-            "handling generation unary task"
+            "handling generation with detection task"
         );
         let ctx = self.ctx.clone();
         let task_handle = tokio::spawn(async move {

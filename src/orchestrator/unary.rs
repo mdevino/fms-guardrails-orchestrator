@@ -194,13 +194,13 @@ impl Orchestrator {
             Ok(Ok(result)) => Ok(result),
             // Task failed, return error propagated from child task that failed
             Ok(Err(error)) => {
-                error!(request_id = ?task.request_id, %error, "generation unary task failed");
+                error!(request_id = ?task.request_id, %error, "generation with detection unary task failed");
                 Err(error)
             }
             // Task cancelled or panicked
             Err(error) => {
                 let error = error.into();
-                error!(request_id = ?task.request_id, %error, "generation unary task failed");
+                error!(request_id = ?task.request_id, %error, "generation with detection unary task failed");
                 Err(error)
             }
         }

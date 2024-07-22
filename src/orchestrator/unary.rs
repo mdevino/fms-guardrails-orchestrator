@@ -341,7 +341,7 @@ pub async fn detect(
     Ok::<Vec<TokenClassificationResult>, Error>(results)
 }
 
-/// Calls a detector compatible with the /api/v1/text/task/generation-detection endpoint
+/// Calls a detector that implements the /api/v1/text/generation endpoint
 pub async fn detect_for_generation(
     ctx: Arc<Context>,
     detector_id: String,

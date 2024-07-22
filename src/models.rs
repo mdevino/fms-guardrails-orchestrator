@@ -117,7 +117,7 @@ impl GenerationWithDetectionHttpRequest {
         if self.prompt.is_empty() {
             return Err(ValidationError::Required("prompt".into()));
         }
-        if self.prompt.is_empty() {
+        if self.detectors.is_empty() {
             return Err(ValidationError::Required("detectors".into()));
         }
         Ok(())

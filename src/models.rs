@@ -480,7 +480,7 @@ pub struct TokenClassificationResult {
 }
 
 /// Detection format received from detectors
-/// This is struct does NOT apply to classification endpoints:
+/// This struct does NOT apply to classification endpoints:
 /// /api/v1/task/classification-with-text-generation
 /// /api/v1/task/server-streaming-classification-with-text-generation
 #[derive(Debug, Clone, PartialEq, serde::Serialize, serde::Deserialize)]

@@ -68,7 +68,7 @@ impl DetectorClient {
         Ok(response)
     }
 
-    /// Invokes detectors compatible with the `/api/v1/text/task/generation-detection` endpoint
+    /// Invokes detectors implemented with the `/api/v1/text/generation` endpoint
     pub async fn generation_detection(
         &self,
         model_id: &str,

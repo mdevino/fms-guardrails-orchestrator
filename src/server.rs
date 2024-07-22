@@ -52,6 +52,7 @@ use crate::{
 };
 
 const API_PREFIX: &str = r#"/api/v1/task"#;
+const TEXT_API_PREFIX: &str = r#"/api/v1/text/task"#;
 
 const PACKAGE_VERSION: &str = env!("CARGO_PKG_VERSION");
 const PACKAGE_NAME: &str = env!("CARGO_PKG_NAME");
@@ -143,7 +144,7 @@ pub async fn run(
             post(classification_with_gen),
         )
         .route(
-            &format!("{}/generation-detection", API_PREFIX),
+            &format!("{}/generation-detection", TEXT_API_PREFIX),
             post(generation_with_detection),
         )
         .route(

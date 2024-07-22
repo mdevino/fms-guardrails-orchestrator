@@ -86,43 +86,6 @@ impl GuardrailsHttpRequest {
     }
 }
 
-/// The request format expected in the /api/v1/text/task/generation-detection endpoint.
-#[derive(Clone, Debug, serde::Serialize, serde::Deserialize)]
-pub struct GenerationWithDetectionHttpRequest {
-    /// The model_id of the LLM to be invoked.
-    #[serde(rename = "model_id")]
-    pub model_id: String,
-
-    /// The prompt to be sent to the LLM.
-    #[serde(rename = "prompt")]
-    pub prompt: String,
-
-    /// The map of detectors to be used, along with their respective parameters, e.g. thresholds.
-    #[serde(rename = "detectors")]
-    pub detectors: HashMap<String, DetectorParams>,
-
-    /// Parameters to be sent to the LLM
-    #[serde(rename = "text_gen_parameters")]
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub text_gen_parameters: Option<GuardrailsTextGenerationParameters>,
-}
-
-impl GenerationWithDetectionHttpRequest {
-    /// Upfront validation of user request
-    pub fn validate(&self) -> Result<(), ValidationError> {
-        // Validate required parameters
-        if self.model_id.is_empty() {
-            return Err(ValidationError::Required("model_id".into()));
-        }
-        if self.prompt.is_empty() {
-            return Err(ValidationError::Required("prompt".into()));
-        }
-        if self.detectors.is_empty() {
-            return Err(ValidationError::Required("detectors".into()));
-        }
-        Ok(())
-    }
-}
 /// Configuration of guardrails models for either or both input to a text generation model
 /// (e.g. user prompt) and output of a text generation model
 #[derive(Default, Debug, Clone, PartialEq, serde::Serialize, serde::Deserialize)]
@@ -350,6 +313,44 @@ pub struct ClassifiedGeneratedTextResult {
     pub input_tokens: Option<Vec<GeneratedToken>>,
 }
 
+/// The request format expected in the /api/v1/text/task/generation-detection endpoint.
+#[derive(Clone, Debug, serde::Serialize, serde::Deserialize)]
+pub struct GenerationWithDetectionHttpRequest {
+    /// The model_id of the LLM to be invoked.
+    #[serde(rename = "model_id")]
+    pub model_id: String,
+
+    /// The prompt to be sent to the LLM.
+    #[serde(rename = "prompt")]
+    pub prompt: String,
+
+    /// The map of detectors to be used, along with their respective parameters, e.g. thresholds.
+    #[serde(rename = "detectors")]
+    pub detectors: HashMap<String, DetectorParams>,
+
+    /// Parameters to be sent to the LLM
+    #[serde(rename = "text_gen_parameters")]
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub text_gen_parameters: Option<GuardrailsTextGenerationParameters>,
+}
+
+impl GenerationWithDetectionHttpRequest {
+    /// Upfront validation of user request
+    pub fn validate(&self) -> Result<(), ValidationError> {
+        // Validate required parameters
+        if self.model_id.is_empty() {
+            return Err(ValidationError::Required("model_id".into()));
+        }
+        if self.prompt.is_empty() {
+            return Err(ValidationError::Required("prompt".into()));
+        }
+        if self.detectors.is_empty() {
+            return Err(ValidationError::Required("detectors".into()));
+        }
+        Ok(())
+    }
+}
+
 /// The response format of the /api/v1/text/task/generation-detection endpoint
 #[derive(Default, Debug, Clone, PartialEq, serde::Serialize, serde::Deserialize)]
 pub struct GenerationWithDetectionResult {
@@ -364,6 +365,25 @@ pub struct GenerationWithDetectionResult {
     /// Input length
     #[serde(rename = "input_token_count")]
     pub input_token_count: u32,
+}
+
+/// Detection format received from detectors
+/// This struct does NOT apply to classification endpoints:
+/// /api/v1/task/classification-with-text-generation
+/// /api/v1/task/server-streaming-classification-with-text-generation
+#[derive(Debug, Clone, PartialEq, serde::Serialize, serde::Deserialize)]
+pub struct DetectionResult {
+    // The type of detection
+    #[serde(rename = "detection_type")]
+    pub detection_type: String,
+
+    // The detection class
+    #[serde(rename = "detection")]
+    pub detection: String,
+
+    // The confidence level in the detection class
+    #[serde(rename = "score")]
+    pub score: f64,
 }
 
 /// Streaming classification result on text produced by a text generation model, containing
@@ -477,25 +497,6 @@ pub struct TokenClassificationResult {
     #[serde(rename = "token_count")]
     #[serde(skip_serializing_if = "Option::is_none")]
     pub token_count: Option<u32>,
-}
-
-/// Detection format received from detectors
-/// This struct does NOT apply to classification endpoints:
-/// /api/v1/task/classification-with-text-generation
-/// /api/v1/task/server-streaming-classification-with-text-generation
-#[derive(Debug, Clone, PartialEq, serde::Serialize, serde::Deserialize)]
-pub struct DetectionResult {
-    // The type of detection
-    #[serde(rename = "detection_type")]
-    pub detection_type: String,
-
-    // The detection class
-    #[serde(rename = "detection")]
-    pub detection: String,
-
-    // The confidence level in the detection class
-    #[serde(rename = "score")]
-    pub score: f64,
 }
 
 /// Enumeration of reasons why text generation stopped

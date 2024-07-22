@@ -97,7 +97,7 @@ pub struct GenerationWithDetectionHttpRequest {
     #[serde(rename = "prompt")]
     pub prompt: String,
 
-    /// The map of detectors to be used, along their respective thresholds.
+    /// The map of detectors to be used, along with their respective parameters, e.g. thresholds.
     #[serde(rename = "detectors")]
     pub detectors: HashMap<String, DetectorParams>,
 

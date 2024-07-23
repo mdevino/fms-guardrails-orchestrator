@@ -47,7 +47,7 @@ use crate::{
     models,
     orchestrator::{
         self, ClassificationWithGenTask, GenerationWithDetectionTask, Orchestrator,
-        StreamingClassificationWithGenTask,
+        StreamingClassificationWithGenTask, TextContentDetectionTask,
     },
 };
 
@@ -153,6 +153,10 @@ pub async fn run(
                 API_PREFIX
             ),
             post(stream_classification_with_gen),
+        )
+        .route(
+            &format!("{}/detection/content", TEXT_API_PREFIX),
+            post(detection_content),
         )
         .with_state(shared_state);
 
@@ -312,6 +316,19 @@ async fn stream_classification_with_gen(
             let sse = Sse::new(map).keep_alive(KeepAlive::default());
             Ok(sse.into_response())
         }
+        Err(error) => Err(error.into()),
+    }
+}
+
+async fn detection_content(
+    State(state): State<Arc<ServerState>>,
+    Json(request): Json<models::TextContentDetectionHttpRequest>,
+) -> Result<impl IntoResponse, Error> {
+    let request_id = Uuid::new_v4();
+    request.validate()?;
+    let task = TextContentDetectionTask::new(request_id, request);
+    match state.orchestrator.handle_text_content_detection(task).await {
+        Ok(response) => Ok(Json(response).into_response()),
         Err(error) => Err(error.into()),
     }
 }

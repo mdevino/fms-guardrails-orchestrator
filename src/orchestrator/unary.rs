@@ -25,14 +25,15 @@ use tracing::{debug, error, info};
 
 use super::{
     apply_masks, get_chunker_ids, Chunk, ClassificationWithGenTask, Context, Error,
-    GenerationWithDetectionTask, Orchestrator,
+    GenerationWithDetectionTask, Orchestrator, TextContentDetectionTask,
 };
 use crate::{
     clients::detector::{ContentAnalysisRequest, GenerationDetectionRequest},
     models::{
         ClassifiedGeneratedTextResult, DetectionResult, DetectorParams,
         GenerationWithDetectionResult, GuardrailsTextGenerationParameters, InputWarning,
-        InputWarningReason, TextGenTokenClassificationResults, TokenClassificationResult,
+        InputWarningReason, TextContentDetectionResult, TextGenTokenClassificationResults,
+        TokenClassificationResult,
     },
     orchestrator::UNSUITABLE_INPUT_MESSAGE,
     pb::caikit::runtime::chunkers,
@@ -201,6 +202,47 @@ impl Orchestrator {
             Err(error) => {
                 let error = error.into();
                 error!(request_id = ?task.request_id, %error, "generation with detection unary task failed");
+                Err(error)
+            }
+        }
+    }
+
+    /// Handles detection on textual content
+    pub async fn handle_text_content_detection(
+        &self,
+        task: TextContentDetectionTask,
+    ) -> Result<TextContentDetectionResult, Error> {
+        info!(
+            request_id = ?task.request_id,
+            "handling text content detection task"
+        );
+        let ctx = self.ctx.clone();
+        let task_handle = tokio::spawn(async move {
+            let content = task.content.clone();
+            let detectors = task.detectors.clone();
+
+            // Call detectors
+            let detections = input_detection_task(&ctx, &detectors, content.clone(), None).await?;
+            debug!(?detections);
+
+            // Send result with input detections
+            Ok(TextContentDetectionResult {
+                content,
+                detections: detections.unwrap_or(vec![]),
+            })
+        });
+        match task_handle.await {
+            // Task completed successfully
+            Ok(Ok(result)) => Ok(result),
+            // Task failed, return error propagated from child task that failed
+            Ok(Err(error)) => {
+                error!(request_id = ?task.request_id, %error, "text content detection task failed");
+                Err(error)
+            }
+            // Task cancelled or panicked
+            Err(error) => {
+                let error = error.into();
+                error!(request_id = ?task.request_id, %error, "text content detection task failed");
                 Err(error)
             }
         }

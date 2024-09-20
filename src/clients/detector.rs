@@ -22,7 +22,7 @@ use serde::{Deserialize, Serialize};
 
 use super::{create_http_clients, Error, HttpClient};
 use crate::{
-    config::ServiceConfig,
+    config::DetectorConfig,
     models::{DetectionResult, DetectorParams},
 };
 
@@ -37,7 +37,7 @@ pub struct DetectorClient {
 
 #[cfg_attr(test, faux::methods)]
 impl DetectorClient {
-    pub async fn new(default_port: u16, config: &[(String, ServiceConfig)]) -> Self {
+    pub async fn new(default_port: u16, config: &[(String, DetectorConfig)]) -> Self {
         let clients: HashMap<String, HttpClient> = create_http_clients(default_port, config).await;
         Self { clients }
     }
@@ -61,7 +61,7 @@ impl DetectorClient {
         request: ContentAnalysisRequest,
     ) -> Result<Vec<Vec<ContentAnalysisResponse>>, Error> {
         let client = self.client(model_id)?;
-        let url = client.base_url().as_str();
+        let url = client.endpoint();
         let response = client
             .post(url)
             .header(DETECTOR_ID_HEADER_NAME, model_id)

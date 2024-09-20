@@ -90,7 +90,7 @@ impl DetectorClient {
         request: GenerationDetectionRequest,
     ) -> Result<Vec<DetectionResult>, Error> {
         let client = self.client(model_id)?;
-        let url = client.base_url().as_str();
+        let url = client.endpoint();
         let response = client
             .post(url)
             .header(DETECTOR_ID_HEADER_NAME, model_id)
@@ -119,7 +119,7 @@ impl DetectorClient {
         request: ContextDocsDetectionRequest,
     ) -> Result<Vec<DetectionResult>, Error> {
         let client = self.client(model_id)?;
-        let url = client.base_url().as_str();
+        let url = client.endpoint();
         let response = client
             .post(url)
             .header(DETECTOR_ID_HEADER_NAME, model_id)

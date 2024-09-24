@@ -21,7 +21,10 @@ use hyper::StatusCode;
 use serde::{Deserialize, Serialize};
 
 use super::{create_http_clients, Error, HttpClient};
-use crate::{config::DetectorConfig, models::DetectorParams};
+use crate::{
+    config::DetectorConfig,
+    models::{DetectionResult, DetectorParams},
+};
 
 const DETECTOR_ID_HEADER_NAME: &str = "detector-id";
 
@@ -49,12 +52,72 @@ impl DetectorClient {
             .clone())
     }
 
-    /// Invokes detector based on its type.
-    pub async fn invoke<T, U>(&self, model_id: &str, request: T) -> Result<U, Error>
-    where
-        T: serde::Serialize,
-        U: serde::de::DeserializeOwned,
-    {
+    // TODO: Use generics here, since the only thing that changes in comparison to generation_detection()
+    // is the "request" parameter and return types?
+    /// Invokes detectors implemented with the `/api/v1/text/contents` endpoint
+    pub async fn text_contents(
+        &self,
+        model_id: &str,
+        request: ContentAnalysisRequest,
+    ) -> Result<Vec<Vec<ContentAnalysisResponse>>, Error> {
+        let client = self.client(model_id)?;
+        let url = client.endpoint();
+        let response = client
+            .post(url)
+            .header(DETECTOR_ID_HEADER_NAME, model_id)
+            .json(&request)
+            .send()
+            .await?;
+        if response.status() == StatusCode::OK {
+            Ok(response.json().await?)
+        } else {
+            let code = response.status().as_u16();
+            let error = response
+                .json::<DetectorError>()
+                .await
+                .unwrap_or(DetectorError {
+                    code,
+                    message: "".into(),
+                });
+            Err(error.into())
+        }
+    }
+
+    /// Invokes detectors implemented with the `/api/v1/text/generation` endpoint
+    pub async fn text_generation(
+        &self,
+        model_id: &str,
+        request: GenerationDetectionRequest,
+    ) -> Result<Vec<DetectionResult>, Error> {
+        let client = self.client(model_id)?;
+        let url = client.endpoint();
+        let response = client
+            .post(url)
+            .header(DETECTOR_ID_HEADER_NAME, model_id)
+            .json(&request)
+            .send()
+            .await?;
+        if response.status() == StatusCode::OK {
+            Ok(response.json().await?)
+        } else {
+            let code = response.status().as_u16();
+            let error = response
+                .json::<DetectorError>()
+                .await
+                .unwrap_or(DetectorError {
+                    code,
+                    message: "".into(),
+                });
+            Err(error.into())
+        }
+    }
+
+    /// Invokes detectors implemented with the `/api/v1/text/context/doc` endpoint
+    pub async fn text_context_doc(
+        &self,
+        model_id: &str,
+        request: ContextDocsDetectionRequest,
+    ) -> Result<Vec<DetectionResult>, Error> {
         let client = self.client(model_id)?;
         let url = client.endpoint();
         let response = client

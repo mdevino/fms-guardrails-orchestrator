@@ -10,10 +10,61 @@ chunkers:
       hostname: localhost
       port: 8085
 detectors:
-  test_detector:
+# Working detectors
+  content_test_detector:
     type: text_contents
     service:
       hostname: localhost
       port: 8000
+    chunker_id: test_chunker
+    default_threshold: 0.5
+  generation_test_detector:
+    type: text_generation
+    service:
+      hostname: localhost
+      port: 8001
+    chunker_id: test_chunker
+    default_threshold: 0.5
+  chat_test_detector:
+    type: text_chat
+    service:
+      hostname: localhost
+      port: 8002
+    chunker_id: test_chunker
+    default_threshold: 0.5
+  context_test_detector:
+    type: text_context_doc
+    service:
+      hostname: localhost
+      port: 8003
+    chunker_id: test_chunker
+    default_threshold: 0.5
+# Broken detectors
+  content_test_detector_error_503:
+    type: text_contents
+    service:
+      hostname: localhost
+      port: 9000
+    chunker_id: test_chunker
+    default_threshold: 0.5
+  generation_test_detector_error_503:
+    type: text_generation
+    service:
+      hostname: localhost
+      port: 9001
+    chunker_id: test_chunker
+    default_threshold: 0.5
+  chat_test_detector_error_503:
+    type: text_chat
+    service:
+      hostname: localhost
+      port: 9002
+    chunker_id: test_chunker
+    default_threshold: 0.5
+  context_test_detector_error_503:
+    type: text_context_doc
+    service:
+      hostname: localhost
+      port: 9003
     chunker_id: test_chunker
     default_threshold: 0.5

@@ -52,6 +52,7 @@ tonic-build = "0.12.1"
 axum-test = "15.7.1"
 faux = "0.1.10"
 tracing-test = "0.2.5"
+wiremock = "0.6.2"
 
 [profile.release]
 debug = false

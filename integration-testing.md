@@ -4,14 +4,14 @@
 * Will we support "Bring Your Own Chunker"? If so...
   * Do we have an API for that?
   * We would need to add tests for wrongly implemented chunkers.
-
+* 
 
 # Generation and detection
 
 ## /api/v1/task/classification-with-text-generation (unary)
 
 ```mermaid
-flowchart LR;
+flowchart LR
   request((Request))
   response(((Response)))
   
@@ -51,7 +51,7 @@ flowchart LR;
 ## /api/v1/task/server-streaming-classification-with-text-generation (streaming)
 
 ```mermaid
-flowchart LR;
+flowchart LR
   request((Request))
   response(((Response)))
   
@@ -91,7 +91,7 @@ flowchart LR;
 ## /api/v2/text/generation-detection
 
 ```mermaid
-flowchart LR;
+flowchart LR
   request((Request))
   response(((Response)))
 
@@ -121,7 +121,7 @@ flowchart LR;
 ## /api/v2/text/detection/content
 
 ```mermaid
-flowchart LR;
+flowchart LR
   request((Request))
   response(((Response)))
 
@@ -148,7 +148,7 @@ flowchart LR;
 ## /api/v2/text/detection/chat
 
 ```mermaid
-flowchart LR;
+flowchart LR
   request((Request))
   response(((Response)))
 
@@ -175,7 +175,7 @@ flowchart LR;
 ## /api/v2/text/detection/context
 
 ```mermaid
-flowchart LR;
+flowchart LR
   request((Request))
   response(((Response)))
 
@@ -202,7 +202,7 @@ flowchart LR;
 ## /api/v2/text/detection/generated
 
 ```mermaid
-flowchart LR;
+flowchart LR
   request((Request))
   response(((Response)))
 

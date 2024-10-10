@@ -151,46 +151,7 @@ pub async fn run(
     }
 
     // (2b) Add main guardrails server routes
-    let app = Router::new()
-        .route(
-            &format!("{}/classification-with-text-generation", API_PREFIX),
-            post(classification_with_gen),
-        )
-        .route(
-            &format!(
-                "{}/server-streaming-classification-with-text-generation",
-                API_PREFIX
-            ),
-            post(stream_classification_with_gen),
-        )
-        .route(
-            &format!("{}/generation-detection", TEXT_API_PREFIX),
-            post(generation_with_detection),
-        )
-        .route(
-            &format!("{}/detection/content", TEXT_API_PREFIX),
-            post(detection_content),
-        )
-        .route(
-            &format!("{}/detection/chat", TEXT_API_PREFIX),
-            post(detect_chat),
-        )
-        .route(
-            &format!("{}/detection/context", TEXT_API_PREFIX),
-            post(detect_context_documents),
-        )
-        .route(
-            &format!("{}/detection/generated", TEXT_API_PREFIX),
-            post(detect_generated),
-        )
-        .with_state(shared_state)
-        .layer(
-            TraceLayer::new_for_http()
-                .make_span_with(tracing_utils::incoming_request_span)
-                .on_request(tracing_utils::on_incoming_request)
-                .on_response(tracing_utils::on_outgoing_response)
-                .on_eos(tracing_utils::on_outgoing_eos),
-        );
+    let app = get_app(shared_state);
 
     // (2c) Generate main guardrails server handle based on whether TLS is needed
     let listener: TcpListener = TcpListener::bind(&http_addr)
@@ -293,6 +254,49 @@ pub fn get_health_app(state: Arc<ServerState>) -> Router {
         .route("/health", get(health))
         .route("/info", get(info))
         .with_state(state)
+}
+
+pub fn get_app(state: Arc<ServerState>) -> Router {
+    Router::new()
+    .route(
+        &format!("{}/classification-with-text-generation", API_PREFIX),
+        post(classification_with_gen),
+    )
+    .route(
+        &format!(
+            "{}/server-streaming-classification-with-text-generation",
+            API_PREFIX
+        ),
+        post(stream_classification_with_gen),
+    )
+    .route(
+        &format!("{}/generation-detection", TEXT_API_PREFIX),
+        post(generation_with_detection),
+    )
+    .route(
+        &format!("{}/detection/content", TEXT_API_PREFIX),
+        post(detection_content),
+    )
+    .route(
+        &format!("{}/detection/chat", TEXT_API_PREFIX),
+        post(detect_chat),
+    )
+    .route(
+        &format!("{}/detection/context", TEXT_API_PREFIX),
+        post(detect_context_documents),
+    )
+    .route(
+        &format!("{}/detection/generated", TEXT_API_PREFIX),
+        post(detect_generated),
+    )
+    .with_state(state)
+    .layer(
+        TraceLayer::new_for_http()
+            .make_span_with(tracing_utils::incoming_request_span)
+            .on_request(tracing_utils::on_incoming_request)
+            .on_response(tracing_utils::on_outgoing_response)
+            .on_eos(tracing_utils::on_outgoing_eos),
+    )
 }
 
 async fn health() -> Result<impl IntoResponse, ()> {

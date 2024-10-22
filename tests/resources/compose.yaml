@@ -1,4 +1,31 @@
 services:
+  tgis:
+    image: wiremock/wiremock:3.9.1
+    ports:
+      - "10000:8080"
+    volumes:
+      - type: bind
+        source: ./extensions
+        target: /var/wiremock/extensions
+      - type: bind
+        source: ./mocks/mappings/tgis
+        target: /home/wiremock/mappings
+      - type: bind
+        source: ./mocks/responses
+        target: /home/wiremock/__files
+      - type: bind
+        source: ./grpc
+        target: /home/wiremock/grpc
+    environment:
+      WIREMOCK_OPTIONS: "--verbose"
+    develop:
+      watch:
+        - action: sync+restart
+          path: ./mocks/mappings/chat_detector
+          target: /home/wiremock/mappings
+        - action: sync+restart
+          path: ./mocks/responses
+          target: /home/wiremock/__files
   chat_test_detector:
     image: wiremock/wiremock:3.9.1
     ports:

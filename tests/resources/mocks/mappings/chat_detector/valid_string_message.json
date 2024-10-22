@@ -10,10 +10,9 @@
               "content": "This is the content of the message",
               "role": "user"
             }
-          ],
-          "detector_params": {}
+          ]
         },
-        "ignoreArrayOrder": true
+        "ignoreExtraElements": true
       }
     ]
   },

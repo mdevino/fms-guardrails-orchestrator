@@ -21,6 +21,6 @@ detectors:
     type: text_chat
     service:
       hostname: localhost
-      port: 9002
+      port: 10002
     chunker_id: test_chunker
     default_threshold: 0.1

@@ -5,12 +5,18 @@ services:
       - "9002:8080"
     volumes:
       - type: bind
-        source: ./mocks/chat_detector/mappings
+        source: ./mocks/mappings/chat_detector
         target: /home/wiremock/mappings
+      - type: bind
+        source: ./mocks/responses
+        target: /home/wiremock/__files
     environment:
       WIREMOCK_OPTIONS: "--verbose"
     develop:
       watch:
         - action: sync+restart
-          path: ./mocks/chat_detector/mappings
+          path: ./mocks/mappings/chat_detector
           target: /home/wiremock/mappings
+        - action: sync+restart
+          path: ./mocks/responses
+          target: /home/wiremock/__files

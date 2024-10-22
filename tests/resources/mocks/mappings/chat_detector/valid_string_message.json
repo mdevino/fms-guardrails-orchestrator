@@ -22,12 +22,6 @@
     "headers": {
       "content-type": "application/json"
     },
-    "jsonBody": [
-      {
-        "detection_type": "is_message_valid",
-        "detection": "Yes",
-        "score": 1.0
-      }
-    ]
+    "bodyFileName": "single_detection_response.json"
   }
 }

@@ -8,12 +8,11 @@ mod common;
 use common::{shared_state, ONCE};
 
 const ORCHESTRATOR_CHAT_DETECTION_ENDPOINT: &str = "/api/v2/text/detection/chat";
+const MOCKED_DETECTOR_NAME: &str = "chat_test_detector";
 
 #[traced_test]
 #[tokio::test]
 async fn test_chat_detection_with_string_message() {
-    let detector_name = "chat_test_detector";
-
     // Initialize orchestrator
     let shared_state = ONCE.get_or_init(shared_state).await.clone();
     let server = TestServer::new(get_app(shared_state)).unwrap();
@@ -29,7 +28,7 @@ async fn test_chat_detection_with_string_message() {
                 }
             ],
             "detectors": {
-                detector_name: {}
+                MOCKED_DETECTOR_NAME: {}
             }
         }))
         .await;
@@ -50,8 +49,6 @@ async fn test_chat_detection_with_string_message() {
 #[traced_test]
 #[tokio::test]
 async fn test_chat_detection_with_text_content_message() {
-    let detector_name = "chat_test_detector";
-
     // Initialize orchestrator
     let shared_state = ONCE.get_or_init(shared_state).await.clone();
     let server = TestServer::new(get_app(shared_state)).unwrap();
@@ -72,7 +69,7 @@ async fn test_chat_detection_with_text_content_message() {
                 }
             ],
             "detectors": {
-                detector_name: {}
+                MOCKED_DETECTOR_NAME: {}
             }
         }))
         .await;

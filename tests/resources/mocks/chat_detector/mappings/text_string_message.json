@@ -1,0 +1,33 @@
+{
+  "request": {
+    "method": "POST",
+    "url": "/api/v1/text/chat",
+    "bodyPatterns": [
+      {
+        "equalToJson": {
+          "messages": [
+            {
+              "content": "This is the content of the message",
+              "role": "user"
+            }
+          ],
+          "detector_params": {}
+        },
+        "ignoreArrayOrder": true
+      }
+    ]
+  },
+  "response": {
+    "status": 200,
+    "headers": {
+      "content-type": "application/json"
+    },
+    "jsonBody": [
+      {
+        "detection_type": "is_message_valid",
+        "detection": "Yes",
+        "score": 1.0
+      }
+    ]
+  }
+}

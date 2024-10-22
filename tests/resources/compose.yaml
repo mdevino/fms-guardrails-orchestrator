@@ -1,0 +1,16 @@
+services:
+  chat_test_detector:
+    image: wiremock/wiremock:3.9.1
+    ports:
+      - "9002:8080"
+    volumes:
+      - type: bind
+        source: ./mocks/chat_detector/mappings
+        target: /home/wiremock/mappings
+    environment:
+      WIREMOCK_OPTIONS: "--verbose"
+    develop:
+      watch:
+        - action: sync+restart
+          path: ./mocks/chat_detector/mappings
+          target: /home/wiremock/mappings

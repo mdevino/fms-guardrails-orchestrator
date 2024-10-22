@@ -295,6 +295,49 @@ pub fn get_health_app(state: Arc<ServerState>) -> Router {
         .with_state(state)
 }
 
+pub fn get_app(state: Arc<ServerState>) -> Router {
+    Router::new()
+        .route(
+            &format!("{}/classification-with-text-generation", API_PREFIX),
+            post(classification_with_gen),
+        )
+        .route(
+            &format!(
+                "{}/server-streaming-classification-with-text-generation",
+                API_PREFIX
+            ),
+            post(stream_classification_with_gen),
+        )
+        .route(
+            &format!("{}/generation-detection", TEXT_API_PREFIX),
+            post(generation_with_detection),
+        )
+        .route(
+            &format!("{}/detection/content", TEXT_API_PREFIX),
+            post(detection_content),
+        )
+        .route(
+            &format!("{}/detection/chat", TEXT_API_PREFIX),
+            post(detect_chat),
+        )
+        .route(
+            &format!("{}/detection/context", TEXT_API_PREFIX),
+            post(detect_context_documents),
+        )
+        .route(
+            &format!("{}/detection/generated", TEXT_API_PREFIX),
+            post(detect_generated),
+        )
+        .with_state(state)
+        .layer(
+            TraceLayer::new_for_http()
+                .make_span_with(tracing_utils::incoming_request_span)
+                .on_request(tracing_utils::on_incoming_request)
+                .on_response(tracing_utils::on_outgoing_response)
+                .on_eos(tracing_utils::on_outgoing_eos),
+        )
+}
+
 async fn health() -> Result<impl IntoResponse, ()> {
     // NOTE: we are only adding the package information in the `health` endpoint to have this endpoint
     // provide a non empty 200 response. If we need to add more information regarding dependencies version

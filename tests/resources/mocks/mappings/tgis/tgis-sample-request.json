@@ -1,20 +1,7 @@
 {
   "request": {
     "method": "POST",
-    "url": "/fmaas.GenerationService/Generate",
-    "bodyPatterns": [
-      {
-        "equalToJson": {
-          "model_id": "potato-70B",
-          "requests": [
-            {
-              "text": "This is my input"
-            }
-          ]
-        },
-        "ignoreExtraElements": true
-      }
-    ]
+    "url": "/fmaas.GenerationService/Generate"
   },
   "response": {
     "status": 200,

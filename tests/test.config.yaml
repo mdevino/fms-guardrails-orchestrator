@@ -17,3 +17,10 @@ detectors:
       port: 8000
     chunker_id: test_chunker
     default_threshold: 0.5
+  chat_test_detector:
+    type: text_chat
+    service:
+      hostname: localhost
+      port: 10002
+    chunker_id: test_chunker
+    default_threshold: 0.1

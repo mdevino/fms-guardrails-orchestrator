@@ -1,0 +1,15 @@
+services:
+  chat_test_detector:
+    image: ghcr.io/beltram/stubr:0.6.2
+    ports:
+      - "10002:8080"
+    volumes:
+      - type: bind
+        source: ./mocks/mappings/chat_detector
+        target: /stubs/chat_detector
+        read_only: true
+      - type: bind
+        source: ./mocks/responses
+        target: /stubs/responses
+        read_only: true
+    command: /stubs -p 8080

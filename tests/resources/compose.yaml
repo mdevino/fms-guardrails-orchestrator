@@ -1,0 +1,24 @@
+services:
+  chat_test_detector:
+    image: wiremock/wiremock:3.9.1
+    ports:
+      - "10002:8080"
+    volumes:
+      - type: bind
+        source: ./mocks/mappings/chat_detector
+        target: /home/wiremock/mappings
+        read_only: true
+      - type: bind
+        source: ./mocks/responses
+        target: /home/wiremock/__files
+        read_only: true
+    environment:
+      WIREMOCK_OPTIONS: "--verbose --disable-banner"
+    develop:
+      watch:
+        - action: sync+restart
+          path: ./mocks/mappings/chat_detector
+          target: /home/wiremock/mappings
+        - action: sync+restart
+          path: ./mocks/responses
+          target: /home/wiremock/__files

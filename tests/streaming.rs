@@ -64,3 +64,35 @@ async fn test_streaming_no_detectors() {
     //     "input_token_count": 4
     // }));
 }
+
+#[traced_test]
+#[tokio::test]
+async fn test_streaming_in_detector_no_detections() {
+    // Initialize orchestrator
+    let shared_state = ONCE.get_or_init(shared_state).await.clone();
+    let server = TestServer::new(get_app(shared_state)).unwrap();
+
+    // make orchestrator request
+    let response = server
+        .post(ORCHESTRATOR_STREAMING_ENDPOINT)
+        .json(&json!({
+            "model_id": "potato-70B",
+            "inputs": "This test contains no detections",
+            "guardrails_config": {
+                "input": {
+                    "models": {
+                        MOCKED_DETECTOR_NAME: {}
+                    }
+                },
+                "output": {
+                    "models": {}
+                }
+            }
+        }))
+        .await;
+
+    // assertions
+    response.assert_status(StatusCode::OK);
+    tracing::info!("{:#?}", response);
+    // tracing::info!("{}", response.text());
+}

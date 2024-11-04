@@ -1,0 +1,24 @@
+{
+  "service": "GenerationService",
+  "method": "GenerateStream",
+  "input": {
+    "equals": {
+      "model_id": "potato-70B",
+      "request": {
+        "text": "This test contains no detections"
+      }
+    }
+  },
+  "output": {
+    "data": {
+      "input_token_count": 7,
+      "generated_token_count": 5,
+      "text": " so text is generated successfully.",
+      "stop_reason": "MAX_TOKENS",
+      "stop_sequence": "",
+      "seed": 0,
+      "tokens": [],
+      "input_tokens": []
+    }
+  }
+}

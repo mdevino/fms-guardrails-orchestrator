@@ -1,0 +1,19 @@
+{
+  "request": {
+    "method": "POST",
+    "url": "/api/v1/text/contents",
+    "bodyPatterns": [
+      {
+        "equalToJson": {
+          "contents": [
+            "This test contains no detections"
+          ]
+        },
+        "ignoreExtraElements": true
+      }
+    ]
+  },
+  "response": {
+    "status": 503
+  }
+}

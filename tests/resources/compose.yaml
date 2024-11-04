@@ -13,6 +13,29 @@ services:
         target: /stubs
         read_only: true
     command: --stub=/stubs /proto/generation.proto /proto/health_check.proto
+  content_test_detector:
+    image: wiremock/wiremock:3.9.1
+    ports:
+      - "10001:8080"
+    volumes:
+      - type: bind
+        source: ./mocks/mappings/content_detector
+        target: /home/wiremock/mappings
+        read_only: true
+      - type: bind
+        source: ./mocks/responses
+        target: /home/wiremock/__files
+        read_only: true
+    environment:
+      WIREMOCK_OPTIONS: "--verbose --disable-banner"
+    develop:
+      watch:
+        - action: sync+restart
+          path: ./mocks/mappings/chat_detector
+          target: /home/wiremock/mappings
+        - action: sync+restart
+          path: ./mocks/responses
+          target: /home/wiremock/__files
   chat_test_detector:
     image: wiremock/wiremock:3.9.1
     ports:

@@ -1,8 +1,8 @@
 generation:
-  provider: nlp # tgis or nlp
+  provider: tgis # tgis or nlp
   service:
     hostname: localhost
-    port: 443
+    port: 10000
 chunkers:
   test_chunker:
     type: sentence

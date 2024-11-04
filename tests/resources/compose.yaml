@@ -1,4 +1,18 @@
 services:
+  tgis:
+    image: tkpd/gripmock:v1.13
+    ports:
+      - "10000:4770"
+    volumes:
+      - type: bind
+        source: ../../protos
+        target: /proto
+        read_only: true
+      - type: bind
+        source: ./mocks/mappings/tgis/gripmock
+        target: /stubs
+        read_only: true
+    command: --stub=/stubs /proto/generation.proto /proto/health_check.proto
   chat_test_detector:
     image: wiremock/wiremock:3.9.1
     ports:

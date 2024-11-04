@@ -1,0 +1,39 @@
+{
+  "protoFile": "/proto/generation.proto",
+  "grpcRequest": {
+    "message": "BatchedGenerationRequest",
+    "service": "GenerationService",
+    "method": "Generate",
+    "bodyPatterns": [
+      {
+        "equalToJson": {
+          "model_id": "potato-70B",
+          "requests": [
+            {
+              "text": "This is my input"
+            }
+          ]
+        },
+        "ignoreExtraElements": true
+      }
+    ]
+  },
+  "grpcResponse": {
+    "status": "OK",
+    "message": "BatchedGenerationResponse",
+    "body": {
+      "responses": [
+        {
+          "input_token_count": 4,
+          "generated_token_count": 20,
+          "text": ":\nI have a table with a column with a value of 1 and a column with a value",
+          "stop_reason": "MAX_TOKENS",
+          "stop_sequence": "",
+          "seed": 0,
+          "tokens": [],
+          "input_tokens": []
+        }
+      ]
+    }
+  }
+}

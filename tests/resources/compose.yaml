@@ -1,4 +1,18 @@
 services:
+  tgis:
+    image: ghcr.io/beltram/stubr:0.6.2
+    ports:
+      - "10000:8080"
+    volumes:
+      - type: bind
+        source: ../../protos
+        target: /proto
+        read_only: true
+      - type: bind
+        source: ./mocks/mappings/tgis/stubr
+        target: /stubs
+        read_only: true
+    command: /stubs -p 8080
   chat_test_detector:
     image: ghcr.io/beltram/stubr:0.6.2
     ports:

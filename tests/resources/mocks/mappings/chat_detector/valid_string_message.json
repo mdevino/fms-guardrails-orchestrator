@@ -1,0 +1,26 @@
+{
+  "request": {
+    "method": "POST",
+    "url": "/api/v1/text/chat",
+    "bodyPatterns": [
+      {
+        "equalToJson": {
+          "messages": [
+            {
+              "content": "This is the content of the message",
+              "role": "user"
+            }
+          ]
+        },
+        "ignoreExtraElements": true
+      }
+    ]
+  },
+  "response": {
+    "status": 200,
+    "headers": {
+      "content-type": "application/json"
+    },
+    "bodyFileName": "single_detection_response.json"
+  }
+}

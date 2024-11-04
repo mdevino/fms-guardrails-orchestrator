@@ -1,29 +1,29 @@
-use std::sync::Arc;
+/*
+ Copyright FMS Guardrails Orchestrator Authors
+
+ Licensed under the Apache License, Version 2.0 (the "License");
+ you may not use this file except in compliance with the License.
+ You may obtain a copy of the License at
+
+     http://www.apache.org/licenses/LICENSE-2.0
+
+ Unless required by applicable law or agreed to in writing, software
+ distributed under the License is distributed on an "AS IS" BASIS,
+ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ See the License for the specific language governing permissions and
+ limitations under the License.
+
+*/
 
 use axum_test::TestServer;
-use fms_guardrails_orchestr8::{
-    config::OrchestratorConfig,
-    orchestrator::Orchestrator,
-    server::{get_health_app, ServerState},
-};
+use fms_guardrails_orchestr8::server::get_health_app;
 use hyper::StatusCode;
 use serde_json::Value;
-use tokio::sync::OnceCell;
 use tracing::debug;
 use tracing_test::traced_test;
 
-/// Async lazy initialization of shared state using tokio::sync::OnceCell
-static ONCE: OnceCell<Arc<ServerState>> = OnceCell::const_new();
-
-/// The actual async function that initializes the shared state if not already initialized
-async fn shared_state() -> Arc<ServerState> {
-    let config = OrchestratorConfig::load("tests/test.config.yaml")
-        .await
-        .unwrap();
-    let orchestrator = Orchestrator::new(config, false).await.unwrap();
-    Arc::new(ServerState::new(orchestrator))
-}
-
+mod common;
+use common::{shared_state, ONCE};
 /// Checks if the health endpoint is working
 /// NOTE: We do not currently mock client services yet, so this test is
 /// superficially testing the client health endpoints on the orchestrator is accessible

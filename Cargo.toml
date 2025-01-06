@@ -69,6 +69,7 @@ tonic-build = "0.12.1"
 [dev-dependencies]
 axum-test = "15.7.1"
 faux = "0.1.10"
+mocktail = { path = "../mocktail/mocktail" }
 tracing-test = "0.2.5"
 
 [profile.release]

@@ -436,7 +436,9 @@ async fn stream_content_detection(
     request: Request,
 ) -> Response {
     let trace_id = Span::current().context().span().span_context().trace_id();
+    debug!(?headers, "Headers BEFORE filtering");
     let headers = filter_headers(&state.orchestrator.config().passthrough_headers, headers);
+    debug!(?headers, "Headers AFTER filtering");
     info!(?trace_id, "handling content detection streaming request");
 
     // Create input stream

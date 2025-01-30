@@ -446,7 +446,7 @@ async fn stream_content_detection(
         .into_body()
         .into_data_stream()
         .map(|result| {
-            let request = result.unwrap().to_vec();
+            let request = result.unwrap();//.to_vec();
             error!(?request, "fun stuff");
             let message = serde_json::from_slice::<StreamingContentDetectionRequest>(&request)?;
             message.validate()?;

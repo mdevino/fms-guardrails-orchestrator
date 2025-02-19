@@ -27,4 +27,6 @@ pub const CHUNKER_NAME_SENTENCE: &str = "sentence_chunker";
 
 // Chunker endpoints
 pub const CHUNKER_UNARY_ENDPOINT: &str =
-    "/caikit.runtime.Chunkers.ChunkersService/ChunkerTokenizationTaskPredict";
+"/caikit.runtime.Chunkers.ChunkersService/ChunkerTokenizationTaskPredict";
+pub const CHUNKER_BIDI_ENDPOINT: &str =
+    "/caikit.runtime.Chunkers.ChunkersService/BidiStreamingChunkerTokenizationTaskPredict";

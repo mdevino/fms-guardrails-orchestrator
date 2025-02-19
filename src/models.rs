@@ -783,6 +783,7 @@ impl From<pb::caikit_data_model::nlp::GeneratedTextStreamResult>
     for ClassifiedGeneratedTextStreamResult
 {
     fn from(value: pb::caikit_data_model::nlp::GeneratedTextStreamResult) -> Self {
+        tracing::debug!("GeneratatedTextStreamResult to be converted: {value:#?}");
         let details = value.details.as_ref();
         Self {
             generated_text: Some(value.generated_text.clone()),

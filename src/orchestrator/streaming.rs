@@ -477,14 +477,17 @@ async fn chunk_broadcast_task(
     let input_stream = BroadcastStream::new(generation_rx)
         .enumerate()
         .map(|(token_pointer, generation_result)| {
+            let generation_result = generation_result.unwrap();
+            debug!("GENERATION RESPONSE: {generation_result:#?}");
             let generated_text = generation_result
-                .unwrap()
                 .generated_text
                 .unwrap_or_default();
-            chunkers::BidiStreamingChunkerTokenizationTaskRequest {
+            let a = chunkers::BidiStreamingChunkerTokenizationTaskRequest {
                 text_stream: generated_text,
                 input_index_stream: token_pointer as i64,
-            }
+            };
+            debug!("CHUNKER REQUEST FROM ORCHESTRATOR: {a:#?}");
+            a
         })
         .boxed();
     debug!("creating chunker output stream");

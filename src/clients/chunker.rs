@@ -96,7 +96,10 @@ impl ChunkerClient {
         // https://github.com/rust-lang/rust/issues/110338
         let response_stream_fut: Pin<Box<dyn Future<Output = StreamingTokenizationResult> + Send>> =
             Box::pin(client.bidi_streaming_chunker_tokenization_task_predict(request));
-        let response_stream = response_stream_fut.await?;
+        debug!("BEFORE AWAITING RESPONSE STREAM");
+        let response_stream = response_stream_fut.await;
+        debug!("IS STREAM RESPONSE OK? {}", response_stream.is_ok());
+        let response_stream = response_stream?;
         let span = Span::current();
         trace_context_from_grpc_response(&span, &response_stream);
         Ok(response_stream.into_inner().map_err(Into::into).boxed())

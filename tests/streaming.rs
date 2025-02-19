@@ -19,7 +19,10 @@ use std::collections::HashMap;
 use test_log::test;
 
 use common::{
-    chunker::{MockChunkersServiceServer, CHUNKER_NAME_SENTENCE, CHUNKER_UNARY_ENDPOINT},
+    chunker::{
+        MockChunkersServiceServer, CHUNKER_BIDI_ENDPOINT, CHUNKER_NAME_SENTENCE,
+        CHUNKER_UNARY_ENDPOINT,
+    },
     detectors::{
         DETECTOR_NAME_ANGLE_BRACKETS_SENTENCE, DETECTOR_NAME_ANGLE_BRACKETS_WHOLE_DOC,
         TEXT_CONTENTS_DETECTOR_ENDPOINT,
@@ -41,16 +44,21 @@ use fms_guardrails_orchestr8::{
         nlp::MODEL_ID_HEADER_NAME as NLP_MODEL_ID_HEADER_NAME,
     },
     models::{
-        ClassifiedGeneratedTextStreamResult, DetectionWarning, DetectorParams, GuardrailsConfig,
-        GuardrailsConfigInput, GuardrailsHttpRequest, TextGenTokenClassificationResults,
-        TokenClassificationResult,
+        ClassifiedGeneratedTextStreamResult, DetectionWarning, DetectorParams, FinishReason,
+        GuardrailsConfig, GuardrailsConfigInput, GuardrailsConfigOutput, GuardrailsHttpRequest,
+        TextGenTokenClassificationResults, TokenClassificationResult,
     },
     pb::{
         caikit::runtime::{
-            chunkers::ChunkerTokenizationTaskRequest,
+            chunkers::{
+                BidiStreamingChunkerTokenizationTaskRequest, ChunkerTokenizationTaskRequest,
+            },
             nlp::{ServerStreamingTextGenerationTaskRequest, TokenizationTaskRequest},
         },
-        caikit_data_model::nlp::{GeneratedTextStreamResult, Token, TokenizationResults},
+        caikit_data_model::nlp::{
+            ChunkerTokenizationStreamResult, GeneratedTextStreamResult, Token, TokenStreamDetails,
+            TokenizationResults,
+        },
     },
 };
 use futures::StreamExt;
@@ -1163,6 +1171,355 @@ async fn test_orchestrator_receives_a_non_compliant_request() -> Result<(), anyh
     assert!(response_body
         .details
         .starts_with("non_existing_field: unknown field `non_existing_field`"));
+
+    Ok(())
+}
+
+#[test(tokio::test)]
+async fn test_output_detector_sentence_chunker_no_detections() -> Result<(), anyhow::Error> {
+    let detector_name = DETECTOR_NAME_ANGLE_BRACKETS_SENTENCE;
+
+    // Add generation mock
+    let model_id = "my-super-model-8B";
+    let mut headers = HeaderMap::new();
+    headers.insert(NLP_MODEL_ID_HEADER_NAME, model_id.parse().unwrap());
+
+    let expected_response = vec![
+        GeneratedTextStreamResult {
+            generated_text: "I".into(),
+            details: Some(TokenStreamDetails {
+                finish_reason: 0,
+                generated_tokens: 1,
+                seed: 0,
+                input_token_count: 0,
+            }),
+            ..Default::default()
+        },
+        GeneratedTextStreamResult {
+            generated_text: " am".into(),
+            details: Some(TokenStreamDetails {
+                finish_reason: 0,
+                generated_tokens: 2,
+                seed: 0,
+                input_token_count: 0,
+            }),
+            ..Default::default()
+        },
+        GeneratedTextStreamResult {
+            generated_text: " great!".into(),
+            details: Some(TokenStreamDetails {
+                finish_reason: 0,
+                generated_tokens: 3,
+                seed: 0,
+                input_token_count: 0,
+            }),
+            ..Default::default()
+        },
+        GeneratedTextStreamResult {
+            generated_text: " What".into(),
+            details: Some(TokenStreamDetails {
+                finish_reason: 0,
+                generated_tokens: 4,
+                seed: 0,
+                input_token_count: 0,
+            }),
+            ..Default::default()
+        },
+        GeneratedTextStreamResult {
+            generated_text: " about".into(),
+            details: Some(TokenStreamDetails {
+                finish_reason: 0,
+                generated_tokens: 5,
+                seed: 0,
+                input_token_count: 0,
+            }),
+            ..Default::default()
+        },
+        GeneratedTextStreamResult {
+            generated_text: " you?".into(),
+            details: Some(TokenStreamDetails {
+                finish_reason: 1,
+                generated_tokens: 6,
+                seed: 0,
+                input_token_count: 0,
+            }),
+            ..Default::default()
+        },
+    ];
+
+    let mut generation_mocks = MockSet::new();
+    generation_mocks.insert(
+        MockPath::new(Method::POST, GENERATION_NLP_STREAMING_ENDPOINT),
+        Mock::new(
+            MockRequest::pb(ServerStreamingTextGenerationTaskRequest {
+                text: "Hi there! How are you?".into(),
+                ..Default::default()
+            })
+            .with_headers(headers.clone()),
+            MockResponse::pb_stream(expected_response.clone()),
+        ),
+    );
+
+    // Add output chunker mock
+    let chunker_id = CHUNKER_NAME_SENTENCE;
+    let mut chunker_headers = HeaderMap::new();
+    chunker_headers.insert(CHUNKER_MODEL_ID_HEADER_NAME, chunker_id.parse()?);
+
+    let mut chunker_mocks = MockSet::new();
+    chunker_mocks.insert(
+        MockPath::new(Method::POST, CHUNKER_BIDI_ENDPOINT),
+        Mock::new(
+            MockRequest::pb_stream(vec![
+                BidiStreamingChunkerTokenizationTaskRequest {
+                    text_stream: "I".into(),
+                    input_index_stream: 0,
+                },
+                BidiStreamingChunkerTokenizationTaskRequest {
+                    text_stream: " am".into(),
+                    input_index_stream: 1,
+                },
+                BidiStreamingChunkerTokenizationTaskRequest {
+                    text_stream: " great!".into(),
+                    input_index_stream: 2,
+                },
+                BidiStreamingChunkerTokenizationTaskRequest {
+                    text_stream: " What".into(),
+                    input_index_stream: 3,
+                },
+                BidiStreamingChunkerTokenizationTaskRequest {
+                    text_stream: " about".into(),
+                    input_index_stream: 4,
+                },
+                BidiStreamingChunkerTokenizationTaskRequest {
+                    text_stream: " you?".into(),
+                    input_index_stream: 5,
+                },
+            ])
+            .with_headers(chunker_headers),
+            MockResponse::pb_stream(vec![
+                ChunkerTokenizationStreamResult {
+                    results: vec![Token {
+                        start: 0,
+                        end: 11,
+                        text: "I am great!".into(),
+                    }],
+                    token_count: 0,
+                    processed_index: 11,
+                    start_index: 0,
+                    input_start_index: 0,
+                    input_end_index: 0,
+                },
+                ChunkerTokenizationStreamResult {
+                    results: vec![Token {
+                        start: 11,
+                        end: 27,
+                        text: " What about you?".into(),
+                    }],
+                    token_count: 0,
+                    processed_index: 27,
+                    start_index: 11,
+                    input_start_index: 0,
+                    input_end_index: 0,
+                },
+            ]),
+        ),
+    );
+
+    // Add output detection mock
+    let mut detection_mocks = MockSet::new();
+    detection_mocks.insert(
+        MockPath::new(Method::POST, TEXT_CONTENTS_DETECTOR_ENDPOINT),
+        Mock::new(
+            MockRequest::json(ContentAnalysisRequest {
+                contents: vec!["I am great!".into(), "What about you?".into()],
+                detector_params: DetectorParams::new(),
+            }),
+            MockResponse::json([
+                Vec::<ContentAnalysisResponse>::new(),
+                Vec::<ContentAnalysisResponse>::new(),
+            ]),
+        ),
+    );
+
+    // Start orchestrator server and its dependencies
+    let mock_chunker_server = MockChunkersServiceServer::new(chunker_mocks)?;
+    let mock_detector_server = HttpMockServer::new(detector_name, detection_mocks)?;
+    let generation_server = MockNlpServiceServer::new(generation_mocks)?;
+    let orchestrator_server = TestOrchestratorServer::run(
+        ORCHESTRATOR_CONFIG_FILE_PATH,
+        find_available_port().unwrap(),
+        find_available_port().unwrap(),
+        Some(generation_server),
+        None,
+        Some(vec![mock_detector_server]),
+        Some(vec![(chunker_id.into(), mock_chunker_server)]),
+    )
+    .await?;
+
+    // Example orchestrator request with streaming response
+    let response = orchestrator_server
+        .post(ORCHESTRATOR_STREAMING_ENDPOINT)
+        .json(&GuardrailsHttpRequest {
+            model_id: model_id.into(),
+            inputs: "Hi there! How are you?".into(),
+            guardrail_config: Some(GuardrailsConfig {
+                input: None,
+                output: Some(GuardrailsConfigOutput {
+                    models: HashMap::from([(detector_name.into(), DetectorParams::new())]),
+                }),
+            }),
+            text_gen_parameters: None,
+        })
+        .send()
+        .await?;
+
+    debug!("{response:#?}");
+
+    // Test custom SseStream wrapper
+    let sse_stream: SseStream<ClassifiedGeneratedTextStreamResult> =
+        SseStream::new(response.bytes_stream());
+    let messages = sse_stream
+        .collect::<Vec<_>>()
+        .await
+        .into_iter()
+        .collect::<Result<Vec<_>, anyhow::Error>>()?;
+    debug!("{messages:#?}");
+
+    // assertions
+    assert!(messages.len() == 2);
+    assert!(messages[0].generated_text == Some("I am great!".into()));
+    assert!(messages[1].generated_text == Some(" What about you?".into()));
+
+    Ok(())
+}
+
+// TODO: remove this test once the change to prevent whole_doc_chunker on streaming endpoints is in place.
+#[test(tokio::test)]
+async fn test_output_detector_whole_doc_no_detections() -> Result<(), anyhow::Error> {
+    let detector_name = DETECTOR_NAME_ANGLE_BRACKETS_WHOLE_DOC;
+
+    // Add generation mock
+    let model_id = "my-super-model-8B";
+    let mut headers = HeaderMap::new();
+    headers.insert(NLP_MODEL_ID_HEADER_NAME, model_id.parse().unwrap());
+
+    let expected_response = vec![
+        GeneratedTextStreamResult {
+            generated_text: "I".into(),
+            ..Default::default()
+        },
+        GeneratedTextStreamResult {
+            generated_text: " am".into(),
+            ..Default::default()
+        },
+        GeneratedTextStreamResult {
+            generated_text: " great!".into(),
+            ..Default::default()
+        },
+        GeneratedTextStreamResult {
+            generated_text: " What".into(),
+            ..Default::default()
+        },
+        GeneratedTextStreamResult {
+            generated_text: " about".into(),
+            ..Default::default()
+        },
+        GeneratedTextStreamResult {
+            generated_text: " you?".into(),
+            ..Default::default()
+        },
+    ];
+
+    let mut generation_mocks = MockSet::new();
+    generation_mocks.insert(
+        MockPath::new(Method::POST, GENERATION_NLP_STREAMING_ENDPOINT),
+        Mock::new(
+            MockRequest::pb(ServerStreamingTextGenerationTaskRequest {
+                text: "Hi there! How are you?".into(),
+                ..Default::default()
+            })
+            .with_headers(headers.clone()),
+            MockResponse::pb_stream(expected_response.clone()),
+        ),
+    );
+
+    // Add output detection mock
+    let mut detection_mocks = MockSet::new();
+    detection_mocks.insert(
+        MockPath::new(Method::POST, TEXT_CONTENTS_DETECTOR_ENDPOINT),
+        Mock::new(
+            MockRequest::json(ContentAnalysisRequest {
+                contents: vec!["I am great! What about you?".into()],
+                detector_params: DetectorParams::new(),
+            }),
+            MockResponse::json([Vec::<ContentAnalysisResponse>::new()]),
+        ),
+    );
+
+    // Start orchestrator server and its dependencies
+    let mock_detector_server = HttpMockServer::new(detector_name, detection_mocks)?;
+    let generation_server = MockNlpServiceServer::new(generation_mocks)?;
+    let orchestrator_server = TestOrchestratorServer::run(
+        ORCHESTRATOR_CONFIG_FILE_PATH,
+        find_available_port().unwrap(),
+        find_available_port().unwrap(),
+        Some(generation_server),
+        None,
+        Some(vec![mock_detector_server]),
+        None,
+    )
+    .await?;
+
+    // Example orchestrator request with streaming response
+    let response = orchestrator_server
+        .post(ORCHESTRATOR_STREAMING_ENDPOINT)
+        .json(&GuardrailsHttpRequest {
+            model_id: model_id.into(),
+            inputs: "Hi there! How are you?".into(),
+            guardrail_config: Some(GuardrailsConfig {
+                input: None,
+                output: Some(GuardrailsConfigOutput {
+                    models: HashMap::from([(detector_name.into(), DetectorParams::new())]),
+                }),
+            }),
+            text_gen_parameters: None,
+        })
+        .send()
+        .await?;
+
+    debug!("{response:#?}");
+
+    // Test custom SseStream wrapper
+    let sse_stream: SseStream<ClassifiedGeneratedTextStreamResult> =
+        SseStream::new(response.bytes_stream());
+    let messages = sse_stream
+        .collect::<Vec<_>>()
+        .await
+        .into_iter()
+        .collect::<Result<Vec<_>, anyhow::Error>>()?;
+    debug!("{messages:#?}");
+
+    // assertions
+    assert!(messages.len() == 1);
+    assert!(
+        messages[0]
+            == ClassifiedGeneratedTextStreamResult {
+                generated_text: Some("I am great! What about you?".into()),
+                token_classification_results: TextGenTokenClassificationResults {
+                    input: None,
+                    output: Some(vec![])
+                },
+                finish_reason: None,
+                generated_token_count: None,
+                seed: None,
+                input_token_count: 0,
+                warnings: None,
+                tokens: Some(vec![]),
+                input_tokens: None,
+                processed_index: Some(27),
+                start_index: Some(0)
+            }
+    );
 
     Ok(())
 }

@@ -56,7 +56,7 @@ async fn test_detection_below_default_threshold_is_not_returned() -> Result<(), 
     // Add detector mock
     let mut mocks = MockSet::new();
     mocks.insert(
-        MockPath::new(Method::POST, DETECTION_ON_GENERATION_DETECTOR_ENDPOINT),
+        MockPath::post(DETECTION_ON_GENERATION_DETECTOR_ENDPOINT),
         Mock::new(
             MockRequest::json(GenerationDetectionRequest {
                 prompt: prompt.into(),
@@ -120,7 +120,7 @@ async fn test_detection_above_default_threshold_is_returned() -> Result<(), anyh
     // Add detector mock
     let mut mocks = MockSet::new();
     mocks.insert(
-        MockPath::new(Method::POST, DETECTION_ON_GENERATION_DETECTOR_ENDPOINT),
+        MockPath::post(DETECTION_ON_GENERATION_DETECTOR_ENDPOINT),
         Mock::new(
             MockRequest::json(GenerationDetectionRequest {
                 prompt: prompt.into(),
@@ -183,7 +183,7 @@ async fn test_detector_returns_503() -> Result<(), anyhow::Error> {
     // Add detector mock
     let mut mocks = MockSet::new();
     mocks.insert(
-        MockPath::new(Method::POST, DETECTION_ON_GENERATION_DETECTOR_ENDPOINT),
+        MockPath::post(DETECTION_ON_GENERATION_DETECTOR_ENDPOINT),
         Mock::new(
             MockRequest::json(GenerationDetectionRequest {
                 prompt: prompt.into(),
@@ -249,7 +249,7 @@ async fn test_detector_returns_404() -> Result<(), anyhow::Error> {
     // Add detector mock
     let mut mocks = MockSet::new();
     mocks.insert(
-        MockPath::new(Method::POST, DETECTION_ON_GENERATION_DETECTOR_ENDPOINT),
+        MockPath::post(DETECTION_ON_GENERATION_DETECTOR_ENDPOINT),
         Mock::new(
             MockRequest::json(GenerationDetectionRequest {
                 prompt: prompt.into(),
@@ -315,7 +315,7 @@ async fn test_detector_returns_500() -> Result<(), anyhow::Error> {
     // Add detector mock
     let mut mocks = MockSet::new();
     mocks.insert(
-        MockPath::new(Method::POST, DETECTION_ON_GENERATION_DETECTOR_ENDPOINT),
+        MockPath::post(DETECTION_ON_GENERATION_DETECTOR_ENDPOINT),
         Mock::new(
             MockRequest::json(GenerationDetectionRequest {
                 prompt: prompt.into(),
@@ -371,7 +371,7 @@ async fn test_detector_returns_non_compliant_message() -> Result<(), anyhow::Err
     // Add detector mock
     let mut mocks = MockSet::new();
     mocks.insert(
-        MockPath::new(Method::POST, DETECTION_ON_GENERATION_DETECTOR_ENDPOINT),
+        MockPath::post(DETECTION_ON_GENERATION_DETECTOR_ENDPOINT),
         Mock::new(
             MockRequest::json(GenerationDetectionRequest {
                 prompt: prompt.into(),

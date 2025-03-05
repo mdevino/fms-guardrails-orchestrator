@@ -18,7 +18,7 @@
 use std::collections::HashMap;
 use test_log::test;
 
-use common::{
+use super::super::common::{
     chunker::{
         CHUNKER_MODEL_ID_HEADER_NAME, CHUNKER_NAME_SENTENCE, CHUNKER_STREAMING_ENDPOINT,
         CHUNKER_UNARY_ENDPOINT,

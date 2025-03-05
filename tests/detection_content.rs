@@ -41,7 +41,7 @@ use fms_guardrails_orchestr8::{
     },
 };
 use hyper::StatusCode;
-use mocktail::{prelude::*, utils::find_available_port};
+use mocktail::prelude::*;
 use tracing::debug;
 
 pub mod common;
@@ -79,8 +79,6 @@ async fn test_single_detection_whole_doc() -> Result<(), anyhow::Error> {
     let mock_detector_server = HttpMockServer::new(detector_name, mocks)?;
     let orchestrator_server = TestOrchestratorServer::run(
         ORCHESTRATOR_CONFIG_FILE_PATH,
-        find_available_port().unwrap(),
-        find_available_port().unwrap(),
         None,
         None,
         Some(vec![mock_detector_server]),
@@ -191,8 +189,6 @@ async fn test_single_detection_sentence_chunker() -> Result<(), anyhow::Error> {
     let mock_detector_server = HttpMockServer::new(detector_name, mocks)?;
     let orchestrator_server = TestOrchestratorServer::run(
         ORCHESTRATOR_CONFIG_FILE_PATH,
-        find_available_port().unwrap(),
-        find_available_port().unwrap(),
         None,
         None,
         Some(vec![mock_detector_server]),

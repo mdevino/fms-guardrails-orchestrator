@@ -28,7 +28,10 @@ use bytes::Bytes;
 use eventsource_stream::{EventStream, Eventsource};
 use fms_guardrails_orchestr8::{config::OrchestratorConfig, orchestrator::Orchestrator};
 use futures::{stream::BoxStream, Stream, StreamExt};
-use mocktail::server::{GrpcMockServer, HttpMockServer};
+use mocktail::{
+    server::{GrpcMockServer, HttpMockServer},
+    utils::find_available_port,
+};
 use rustls::crypto::ring;
 use serde::de::DeserializeOwned;
 use tokio::task::JoinHandle;
@@ -62,8 +65,6 @@ impl TestOrchestratorServer {
     /// Configures and runs an orchestrator server.
     pub async fn run(
         config_path: impl AsRef<Path>,
-        port: u16,
-        health_port: u16,
         generation_server: Option<GrpcMockServer>,
         chat_generation_server: Option<HttpMockServer>,
         detector_servers: Option<Vec<HttpMockServer>>,
@@ -71,6 +72,8 @@ impl TestOrchestratorServer {
     ) -> Result<Self, anyhow::Error> {
         // Set default crypto provider
         ensure_global_rustls_state();
+        let port = find_available_port().unwrap();
+        let health_port = find_available_port().unwrap();
 
         // Load orchestrator config
         let mut config = OrchestratorConfig::load(config_path).await?;

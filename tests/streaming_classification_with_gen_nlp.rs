@@ -131,8 +131,6 @@ async fn test_no_detectors() -> Result<(), anyhow::Error> {
     // Run test orchestrator server
     let orchestrator_server = TestOrchestratorServer::run(
         ORCHESTRATOR_CONFIG_FILE_PATH,
-        find_available_port().unwrap(),
-        find_available_port().unwrap(),
         Some(generation_server),
         None,
         None,
@@ -231,8 +229,6 @@ async fn test_input_detector_whole_doc_no_detections() -> Result<(), anyhow::Err
     let generation_server = GrpcMockServer::new("nlp", generation_mocks)?;
     let orchestrator_server = TestOrchestratorServer::run(
         ORCHESTRATOR_CONFIG_FILE_PATH,
-        find_available_port().unwrap(),
-        find_available_port().unwrap(),
         Some(generation_server),
         None,
         Some(vec![mock_detector_server]),
@@ -377,8 +373,6 @@ async fn test_input_detector_sentence_chunker_no_detections() -> Result<(), anyh
     let generation_server = GrpcMockServer::new("nlp", generation_mocks)?;
     let orchestrator_server = TestOrchestratorServer::run(
         ORCHESTRATOR_CONFIG_FILE_PATH,
-        find_available_port().unwrap(),
-        find_available_port().unwrap(),
         Some(generation_server),
         None,
         Some(vec![mock_detector_server]),
@@ -490,8 +484,6 @@ async fn test_input_detector_whole_doc_with_detections() -> Result<(), anyhow::E
     let generation_server = GrpcMockServer::new("nlp", generation_mocks)?;
     let orchestrator_server = TestOrchestratorServer::run(
         ORCHESTRATOR_CONFIG_FILE_PATH,
-        find_available_port().unwrap(),
-        find_available_port().unwrap(),
         Some(generation_server),
         None,
         Some(vec![mock_detector_server]),
@@ -650,8 +642,6 @@ async fn test_input_detector_sentence_chunker_with_detections() -> Result<(), an
     let generation_server = GrpcMockServer::new("nlp", generation_mocks)?;
     let orchestrator_server = TestOrchestratorServer::run(
         ORCHESTRATOR_CONFIG_FILE_PATH,
-        find_available_port().unwrap(),
-        find_available_port().unwrap(),
         Some(generation_server),
         None,
         Some(vec![mock_detector_server]),
@@ -739,8 +729,6 @@ async fn test_input_detector_returns_503() -> Result<(), anyhow::Error> {
     let mock_detector_server = HttpMockServer::new(detector_name, detection_mocks)?;
     let orchestrator_server = TestOrchestratorServer::run(
         ORCHESTRATOR_CONFIG_FILE_PATH,
-        find_available_port().unwrap(),
-        find_available_port().unwrap(),
         None,
         None,
         Some(vec![mock_detector_server]),
@@ -818,8 +806,6 @@ async fn test_input_detector_returns_404() -> Result<(), anyhow::Error> {
     let mock_detector_server = HttpMockServer::new(detector_name, detection_mocks)?;
     let orchestrator_server = TestOrchestratorServer::run(
         ORCHESTRATOR_CONFIG_FILE_PATH,
-        find_available_port().unwrap(),
-        find_available_port().unwrap(),
         None,
         None,
         Some(vec![mock_detector_server]),
@@ -898,8 +884,6 @@ async fn test_input_detector_returns_500() -> Result<(), anyhow::Error> {
     let mock_detector_server = HttpMockServer::new(detector_name, detection_mocks)?;
     let orchestrator_server = TestOrchestratorServer::run(
         ORCHESTRATOR_CONFIG_FILE_PATH,
-        find_available_port().unwrap(),
-        find_available_port().unwrap(),
         None,
         None,
         Some(vec![mock_detector_server]),
@@ -974,8 +958,6 @@ async fn test_input_detector_returns_invalid_message() -> Result<(), anyhow::Err
     let mock_detector_server = HttpMockServer::new(detector_name, detection_mocks)?;
     let orchestrator_server = TestOrchestratorServer::run(
         ORCHESTRATOR_CONFIG_FILE_PATH,
-        find_available_port().unwrap(),
-        find_available_port().unwrap(),
         None,
         None,
         Some(vec![mock_detector_server]),
@@ -1047,8 +1029,6 @@ async fn test_input_chunker_returns_an_error() -> Result<(), anyhow::Error> {
     let mock_chunker_server = GrpcMockServer::new(chunker_id, chunker_mocks)?;
     let orchestrator_server = TestOrchestratorServer::run(
         ORCHESTRATOR_CONFIG_FILE_PATH,
-        find_available_port().unwrap(),
-        find_available_port().unwrap(),
         None,
         None,
         None,
@@ -1137,8 +1117,6 @@ async fn test_generation_server_returns_an_error() -> Result<(), anyhow::Error> 
     let generation_server = GrpcMockServer::new("nlp", generation_mocks)?;
     let orchestrator_server = TestOrchestratorServer::run(
         ORCHESTRATOR_CONFIG_FILE_PATH,
-        find_available_port().unwrap(),
-        find_available_port().unwrap(),
         Some(generation_server),
         None,
         Some(vec![mock_detector_server]),
@@ -1187,16 +1165,8 @@ async fn test_request_with_extra_fields_returns_422() -> Result<(), anyhow::Erro
     let model_id = "my-super-model-8B";
 
     // Run test orchestrator server
-    let orchestrator_server = TestOrchestratorServer::run(
-        ORCHESTRATOR_CONFIG_FILE_PATH,
-        find_available_port().unwrap(),
-        find_available_port().unwrap(),
-        None,
-        None,
-        None,
-        None,
-    )
-    .await?;
+    let orchestrator_server =
+        TestOrchestratorServer::run(ORCHESTRATOR_CONFIG_FILE_PATH, None, None, None, None).await?;
 
     // Example orchestrator request with streaming response
     let response = orchestrator_server
@@ -1373,8 +1343,6 @@ async fn test_output_detector_sentence_chunker_no_detections() -> Result<(), any
     let generation_server = GrpcMockServer::new("nlp", generation_mocks)?;
     let orchestrator_server = TestOrchestratorServer::run(
         ORCHESTRATOR_CONFIG_FILE_PATH,
-        find_available_port().unwrap(),
-        find_available_port().unwrap(),
         Some(generation_server),
         None,
         Some(vec![mock_detector_server]),
@@ -1581,8 +1549,6 @@ async fn test_output_detector_sentence_chunker_with_detections() -> Result<(), a
     let generation_server = GrpcMockServer::new("nlp", generation_mocks)?;
     let orchestrator_server = TestOrchestratorServer::run(
         ORCHESTRATOR_CONFIG_FILE_PATH,
-        find_available_port().unwrap(),
-        find_available_port().unwrap(),
         Some(generation_server),
         None,
         Some(vec![mock_detector_server]),
@@ -1803,8 +1769,6 @@ async fn test_output_detector_returns_503() -> Result<(), anyhow::Error> {
     let generation_server = GrpcMockServer::new("nlp", generation_mocks)?;
     let orchestrator_server = TestOrchestratorServer::run(
         ORCHESTRATOR_CONFIG_FILE_PATH,
-        find_available_port().unwrap(),
-        find_available_port().unwrap(),
         Some(generation_server),
         None,
         Some(vec![mock_detector_server]),
@@ -2030,8 +1994,6 @@ async fn test_output_detector_returns_404() -> Result<(), anyhow::Error> {
     let generation_server = GrpcMockServer::new("nlp", generation_mocks)?;
     let orchestrator_server = TestOrchestratorServer::run(
         ORCHESTRATOR_CONFIG_FILE_PATH,
-        find_available_port().unwrap(),
-        find_available_port().unwrap(),
         Some(generation_server),
         None,
         Some(vec![mock_detector_server]),
@@ -2258,8 +2220,6 @@ async fn test_output_detector_returns_500() -> Result<(), anyhow::Error> {
     let generation_server = GrpcMockServer::new("nlp", generation_mocks)?;
     let orchestrator_server = TestOrchestratorServer::run(
         ORCHESTRATOR_CONFIG_FILE_PATH,
-        find_available_port().unwrap(),
-        find_available_port().unwrap(),
         Some(generation_server),
         None,
         Some(vec![mock_detector_server]),

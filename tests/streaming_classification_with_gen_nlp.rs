@@ -1872,6 +1872,7 @@ async fn test_output_detector_returns_503() -> Result<(), anyhow::Error> {
 
     Ok(())
 }
+
 /// Asserts that error 404 is propagated from output detector.
 #[test(tokio::test)]
 async fn test_output_detector_returns_404() -> Result<(), anyhow::Error> {
@@ -2095,6 +2096,228 @@ async fn test_output_detector_returns_404() -> Result<(), anyhow::Error> {
                 detector_name, expected_detector_error.message
             )
     );
+
+    Ok(())
+}
+
+/// Asserts that error 500 is propagated from output detector.
+#[test(tokio::test)]
+async fn test_output_detector_returns_500() -> Result<(), anyhow::Error> {
+    let detector_name = DETECTOR_NAME_ANGLE_BRACKETS_SENTENCE;
+
+    // Add generation mock
+    let model_id = "my-super-model-8B";
+    let mut headers = HeaderMap::new();
+    headers.insert(
+        GENERATION_NLP_MODEL_ID_HEADER_NAME,
+        model_id.parse().unwrap(),
+    );
+
+    let mut generation_mocks = MockSet::new();
+    generation_mocks.insert(
+        MockPath::post(GENERATION_NLP_STREAMING_ENDPOINT),
+        Mock::new(
+            MockRequest::pb(ServerStreamingTextGenerationTaskRequest {
+                text: "Hi there! How are you?".into(),
+                ..Default::default()
+            })
+            .with_headers(headers.clone()),
+            MockResponse::pb_stream(vec![
+                GeneratedTextStreamResult {
+                    generated_text: "I".into(),
+                    ..Default::default()
+                },
+                GeneratedTextStreamResult {
+                    generated_text: " am".into(),
+                    ..Default::default()
+                },
+                GeneratedTextStreamResult {
+                    generated_text: " great!".into(),
+                    ..Default::default()
+                },
+                GeneratedTextStreamResult {
+                    generated_text: " Detector,".into(),
+                    ..Default::default()
+                },
+                GeneratedTextStreamResult {
+                    generated_text: " return".into(),
+                    ..Default::default()
+                },
+                GeneratedTextStreamResult {
+                    generated_text: " a".into(),
+                    ..Default::default()
+                },
+                GeneratedTextStreamResult {
+                    generated_text: " 500!".into(),
+                    ..Default::default()
+                },
+            ]),
+        ),
+    );
+
+    // Add output chunker mock
+    let chunker_id = CHUNKER_NAME_SENTENCE;
+    let mut chunker_headers = HeaderMap::new();
+    chunker_headers.insert(CHUNKER_MODEL_ID_HEADER_NAME, chunker_id.parse()?);
+
+    let mut chunker_mocks = MockSet::new();
+    chunker_mocks.insert(
+        MockPath::post(CHUNKER_STREAMING_ENDPOINT),
+        Mock::new(
+            MockRequest::pb_stream(vec![
+                BidiStreamingChunkerTokenizationTaskRequest {
+                    text_stream: "I".into(),
+                    input_index_stream: 0,
+                },
+                BidiStreamingChunkerTokenizationTaskRequest {
+                    text_stream: " am".into(),
+                    input_index_stream: 1,
+                },
+                BidiStreamingChunkerTokenizationTaskRequest {
+                    text_stream: " great!".into(),
+                    input_index_stream: 2,
+                },
+                BidiStreamingChunkerTokenizationTaskRequest {
+                    text_stream: " Detector,".into(),
+                    input_index_stream: 3,
+                },
+                BidiStreamingChunkerTokenizationTaskRequest {
+                    text_stream: " return".into(),
+                    input_index_stream: 4,
+                },
+                BidiStreamingChunkerTokenizationTaskRequest {
+                    text_stream: " a".into(),
+                    input_index_stream: 5,
+                },
+                BidiStreamingChunkerTokenizationTaskRequest {
+                    text_stream: " 500!".into(),
+                    input_index_stream: 6,
+                },
+            ])
+            .with_headers(chunker_headers),
+            MockResponse::pb_stream(vec![
+                ChunkerTokenizationStreamResult {
+                    results: vec![Token {
+                        start: 0,
+                        end: 11,
+                        text: "I am great!".into(),
+                    }],
+                    token_count: 0,
+                    processed_index: 11,
+                    start_index: 0,
+                    input_start_index: 0,
+                    input_end_index: 0,
+                },
+                ChunkerTokenizationStreamResult {
+                    results: vec![Token {
+                        start: 11,
+                        end: 35,
+                        text: " Detector, return a 500!".into(),
+                    }],
+                    token_count: 0,
+                    processed_index: 35,
+                    start_index: 11,
+                    input_start_index: 0,
+                    input_end_index: 0,
+                },
+            ]),
+        ),
+    );
+
+    // Add output detection mock
+    let expected_detector_error = DetectorError {
+        code: 500,
+        message: "The detector service is overloaded.".into(),
+    };
+    let mut detection_mocks = MockSet::new();
+    detection_mocks.insert(
+        MockPath::post(TEXT_CONTENTS_DETECTOR_ENDPOINT),
+        Mock::new(
+            MockRequest::json(ContentAnalysisRequest {
+                contents: vec!["I am great!".into()],
+                detector_params: DetectorParams::new(),
+            }),
+            MockResponse::json([Vec::<ContentAnalysisResponse>::new()]),
+        ),
+    );
+    detection_mocks.insert(
+        MockPath::post(TEXT_CONTENTS_DETECTOR_ENDPOINT),
+        Mock::new(
+            MockRequest::json(ContentAnalysisRequest {
+                contents: vec![" Detector, return a 500!".into()],
+                detector_params: DetectorParams::new(),
+            }),
+            MockResponse::json(&expected_detector_error)
+                .with_code(StatusCode::INTERNAL_SERVER_ERROR),
+        ),
+    );
+
+    // Start orchestrator server and its dependencies
+    let mock_chunker_server = GrpcMockServer::new(chunker_id, chunker_mocks)?;
+    let mock_detector_server = HttpMockServer::new(detector_name, detection_mocks)?;
+    let generation_server = GrpcMockServer::new("nlp", generation_mocks)?;
+    let orchestrator_server = TestOrchestratorServer::run(
+        ORCHESTRATOR_CONFIG_FILE_PATH,
+        find_available_port().unwrap(),
+        find_available_port().unwrap(),
+        Some(generation_server),
+        None,
+        Some(vec![mock_detector_server]),
+        Some(vec![mock_chunker_server]),
+    )
+    .await?;
+
+    // Example orchestrator request with streaming response
+    let response = orchestrator_server
+        .post(ORCHESTRATOR_STREAMING_ENDPOINT)
+        .json(&GuardrailsHttpRequest {
+            model_id: model_id.into(),
+            inputs: "Hi there! How are you?".into(),
+            guardrail_config: Some(GuardrailsConfig {
+                input: None,
+                output: Some(GuardrailsConfigOutput {
+                    models: HashMap::from([(detector_name.into(), DetectorParams::new())]),
+                }),
+            }),
+            text_gen_parameters: None,
+        })
+        .send()
+        .await?;
+
+    debug!("{response:#?}");
+
+    // Example showing how to create an event stream from a bytes stream.
+    let mut events = Vec::new();
+    let mut event_stream = response.bytes_stream().eventsource();
+    while let Some(event) = event_stream.next().await {
+        match event {
+            Ok(event) => {
+                if event.data == "[DONE]" {
+                    break;
+                }
+                println!("recv: {event:?}");
+                events.push(event.data);
+            }
+            Err(_) => {
+                panic!("received error from event stream");
+            }
+        }
+    }
+    println!("{events:?}");
+
+    let first_response =
+        serde_json::from_str::<ClassifiedGeneratedTextStreamResult>(events[0].as_str())?;
+    let second_response = serde_json::from_str::<OrchestratorError>(events[1].as_str())?;
+
+    assert!(events.len() == 2);
+
+    assert!(first_response.generated_text == Some("I am great!".into()));
+    assert!(first_response.token_classification_results.output == Some(vec![]));
+    assert!(first_response.start_index == Some(0));
+    assert!(first_response.processed_index == Some(11));
+
+    assert!(second_response.code == 500);
+    assert!(second_response.details == ORCHESTRATOR_INTERNAL_SERVER_ERROR_MESSAGE);
 
     Ok(())
 }

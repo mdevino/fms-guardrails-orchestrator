@@ -38,7 +38,7 @@ use tokio::task::JoinHandle;
 use url::Url;
 
 // Default orchestrator configuration file for integration tests.
-pub const ORCHESTRATOR_CONFIG_FILE_PATH: &str = "tests/test_config.yaml";
+pub const ORCHESTRATOR_CONFIG_FILE: &str = "tests/test_config.yaml";
 
 // Endpoints
 pub const ORCHESTRATOR_STREAMING_ENDPOINT: &str =

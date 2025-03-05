@@ -21,4 +21,4 @@ pub const GENERATION_NLP_STREAMING_ENDPOINT: &str =
 pub const GENERATION_NLP_TOKENIZATION_ENDPOINT: &str =
     "/caikit.runtime.Nlp.NlpService/TokenizationTaskPredict";
 
-pub const GENERATION_NLP_MODEL_ID_HEADER_NAME: &str = "mm-model-id";
+pub const GENERATION_MODEL_HEADER: &str = "mm-model-id";

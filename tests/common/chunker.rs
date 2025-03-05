@@ -24,4 +24,4 @@ pub const CHUNKER_UNARY_ENDPOINT: &str =
 pub const CHUNKER_STREAMING_ENDPOINT: &str =
     "/caikit.runtime.Chunkers.ChunkersService/BidiStreamingChunkerTokenizationTaskPredict";
 
-pub const CHUNKER_MODEL_ID_HEADER_NAME: &str = "mm-model-id";
+pub const CHUNKER_MODEL_HEADER: &str = "mm-model-id";

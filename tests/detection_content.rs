@@ -25,8 +25,7 @@ use common::{
         TEXT_CONTENTS_DETECTOR_ENDPOINT,
     },
     orchestrator::{
-        TestOrchestratorServer, ORCHESTRATOR_CONFIG_FILE_PATH,
-        ORCHESTRATOR_CONTENT_DETECTION_ENDPOINT,
+        TestOrchestratorServer, ORCHESTRATOR_CONFIG_FILE, ORCHESTRATOR_CONTENT_DETECTION_ENDPOINT,
     },
 };
 use fms_guardrails_orchestr8::{
@@ -78,7 +77,7 @@ async fn test_single_detection_whole_doc() -> Result<(), anyhow::Error> {
     // Start orchestrator server and its dependencies
     let mock_detector_server = HttpMockServer::new(detector_name, mocks)?;
     let orchestrator_server = TestOrchestratorServer::run(
-        ORCHESTRATOR_CONFIG_FILE_PATH,
+        ORCHESTRATOR_CONFIG_FILE,
         None,
         None,
         Some(vec![mock_detector_server]),
@@ -188,7 +187,7 @@ async fn test_single_detection_sentence_chunker() -> Result<(), anyhow::Error> {
     let mock_chunker_server = GrpcMockServer::new(chunker_id, chunker_mocks)?;
     let mock_detector_server = HttpMockServer::new(detector_name, mocks)?;
     let orchestrator_server = TestOrchestratorServer::run(
-        ORCHESTRATOR_CONFIG_FILE_PATH,
+        ORCHESTRATOR_CONFIG_FILE,
         None,
         None,
         Some(vec![mock_detector_server]),

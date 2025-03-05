@@ -21,7 +21,7 @@ use test_log::test;
 
 use common::{
     chunker::{
-        CHUNKER_MODEL_ID_HEADER_NAME, CHUNKER_NAME_SENTENCE, CHUNKER_STREAMING_ENDPOINT,
+        CHUNKER_MODEL_HEADER, CHUNKER_NAME_SENTENCE, CHUNKER_STREAMING_ENDPOINT,
         CHUNKER_UNARY_ENDPOINT,
     },
     detectors::{
@@ -30,11 +30,11 @@ use common::{
     },
     errors::{DetectorError, OrchestratorError},
     generation::{
-        GENERATION_NLP_MODEL_ID_HEADER_NAME, GENERATION_NLP_STREAMING_ENDPOINT,
+        GENERATION_MODEL_HEADER, GENERATION_NLP_STREAMING_ENDPOINT,
         GENERATION_NLP_TOKENIZATION_ENDPOINT,
     },
     orchestrator::{
-        SseStream, TestOrchestratorServer, ORCHESTRATOR_CONFIG_FILE_PATH,
+        SseStream, TestOrchestratorServer, ORCHESTRATOR_CONFIG_FILE,
         ORCHESTRATOR_INTERNAL_SERVER_ERROR_MESSAGE, ORCHESTRATOR_STREAMING_ENDPOINT,
         ORCHESTRATOR_UNSUITABLE_INPUT_MESSAGE,
     },
@@ -59,7 +59,7 @@ use fms_guardrails_orchestr8::{
     },
 };
 use futures::StreamExt;
-use mocktail::{prelude::*, utils::find_available_port};
+use mocktail::prelude::*;
 use tracing::debug;
 
 pub mod common;
@@ -92,10 +92,7 @@ async fn test_no_detectors() -> Result<(), anyhow::Error> {
     // Add generation mock
     let model_id = "my-super-model-8B";
     let mut headers = HeaderMap::new();
-    headers.insert(
-        GENERATION_NLP_MODEL_ID_HEADER_NAME,
-        model_id.parse().unwrap(),
-    );
+    headers.insert(GENERATION_MODEL_HEADER, model_id.parse().unwrap());
 
     let expected_response = vec![
         GeneratedTextStreamResult {
@@ -130,7 +127,7 @@ async fn test_no_detectors() -> Result<(), anyhow::Error> {
 
     // Run test orchestrator server
     let orchestrator_server = TestOrchestratorServer::run(
-        ORCHESTRATOR_CONFIG_FILE_PATH,
+        ORCHESTRATOR_CONFIG_FILE,
         Some(generation_server),
         None,
         None,
@@ -191,10 +188,7 @@ async fn test_input_detector_whole_doc_no_detections() -> Result<(), anyhow::Err
     // Add generation mock
     let model_id = "my-super-model-8B";
     let mut headers = HeaderMap::new();
-    headers.insert(
-        GENERATION_NLP_MODEL_ID_HEADER_NAME,
-        model_id.parse().unwrap(),
-    );
+    headers.insert(GENERATION_MODEL_HEADER, model_id.parse().unwrap());
 
     let expected_response = vec![
         GeneratedTextStreamResult {
@@ -228,7 +222,7 @@ async fn test_input_detector_whole_doc_no_detections() -> Result<(), anyhow::Err
     let mock_detector_server = HttpMockServer::new(detector_name, detection_mocks)?;
     let generation_server = GrpcMockServer::new("nlp", generation_mocks)?;
     let orchestrator_server = TestOrchestratorServer::run(
-        ORCHESTRATOR_CONFIG_FILE_PATH,
+        ORCHESTRATOR_CONFIG_FILE,
         Some(generation_server),
         None,
         Some(vec![mock_detector_server]),
@@ -287,7 +281,7 @@ async fn test_input_detector_sentence_chunker_no_detections() -> Result<(), anyh
     // Add input chunker mock
     let chunker_id = CHUNKER_NAME_SENTENCE;
     let mut chunker_headers = HeaderMap::new();
-    chunker_headers.insert(CHUNKER_MODEL_ID_HEADER_NAME, chunker_id.parse()?);
+    chunker_headers.insert(CHUNKER_MODEL_HEADER, chunker_id.parse()?);
 
     let mut chunker_mocks = MockSet::new();
     chunker_mocks.insert(
@@ -334,10 +328,7 @@ async fn test_input_detector_sentence_chunker_no_detections() -> Result<(), anyh
     // Add generation mock
     let model_id = "my-super-model-8B";
     let mut headers = HeaderMap::new();
-    headers.insert(
-        GENERATION_NLP_MODEL_ID_HEADER_NAME,
-        model_id.parse().unwrap(),
-    );
+    headers.insert(GENERATION_MODEL_HEADER, model_id.parse().unwrap());
 
     let expected_response = vec![
         GeneratedTextStreamResult {
@@ -372,7 +363,7 @@ async fn test_input_detector_sentence_chunker_no_detections() -> Result<(), anyh
     let mock_detector_server = HttpMockServer::new(detector_name, detection_mocks)?;
     let generation_server = GrpcMockServer::new("nlp", generation_mocks)?;
     let orchestrator_server = TestOrchestratorServer::run(
-        ORCHESTRATOR_CONFIG_FILE_PATH,
+        ORCHESTRATOR_CONFIG_FILE,
         Some(generation_server),
         None,
         Some(vec![mock_detector_server]),
@@ -462,10 +453,7 @@ async fn test_input_detector_whole_doc_with_detections() -> Result<(), anyhow::E
         token_count: 61,
     };
     let mut headers = HeaderMap::new();
-    headers.insert(
-        GENERATION_NLP_MODEL_ID_HEADER_NAME,
-        model_id.parse().unwrap(),
-    );
+    headers.insert(GENERATION_MODEL_HEADER, model_id.parse().unwrap());
     let mut generation_mocks = MockSet::new();
     generation_mocks.insert(
         MockPath::post(GENERATION_NLP_TOKENIZATION_ENDPOINT),
@@ -483,7 +471,7 @@ async fn test_input_detector_whole_doc_with_detections() -> Result<(), anyhow::E
     let mock_detector_server = HttpMockServer::new(detector_name, detection_mocks)?;
     let generation_server = GrpcMockServer::new("nlp", generation_mocks)?;
     let orchestrator_server = TestOrchestratorServer::run(
-        ORCHESTRATOR_CONFIG_FILE_PATH,
+        ORCHESTRATOR_CONFIG_FILE,
         Some(generation_server),
         None,
         Some(vec![mock_detector_server]),
@@ -557,7 +545,7 @@ async fn test_input_detector_sentence_chunker_with_detections() -> Result<(), an
     // Add chunker mock
     let chunker_id = CHUNKER_NAME_SENTENCE;
     let mut chunker_headers = HeaderMap::new();
-    chunker_headers.insert(CHUNKER_MODEL_ID_HEADER_NAME, chunker_id.parse()?);
+    chunker_headers.insert(CHUNKER_MODEL_HEADER, chunker_id.parse()?);
 
     let mut chunker_mocks = MockSet::new();
     chunker_mocks.insert(
@@ -619,10 +607,7 @@ async fn test_input_detector_sentence_chunker_with_detections() -> Result<(), an
         token_count: 61,
     };
     let mut headers = HeaderMap::new();
-    headers.insert(
-        GENERATION_NLP_MODEL_ID_HEADER_NAME,
-        model_id.parse().unwrap(),
-    );
+    headers.insert(GENERATION_MODEL_HEADER, model_id.parse().unwrap());
     let mut generation_mocks = MockSet::new();
     generation_mocks.insert(
         MockPath::post(GENERATION_NLP_TOKENIZATION_ENDPOINT),
@@ -641,7 +626,7 @@ async fn test_input_detector_sentence_chunker_with_detections() -> Result<(), an
     let mock_detector_server = HttpMockServer::new(detector_name, detection_mocks)?;
     let generation_server = GrpcMockServer::new("nlp", generation_mocks)?;
     let orchestrator_server = TestOrchestratorServer::run(
-        ORCHESTRATOR_CONFIG_FILE_PATH,
+        ORCHESTRATOR_CONFIG_FILE,
         Some(generation_server),
         None,
         Some(vec![mock_detector_server]),
@@ -728,7 +713,7 @@ async fn test_input_detector_returns_503() -> Result<(), anyhow::Error> {
     // Start orchestrator server and its dependencies
     let mock_detector_server = HttpMockServer::new(detector_name, detection_mocks)?;
     let orchestrator_server = TestOrchestratorServer::run(
-        ORCHESTRATOR_CONFIG_FILE_PATH,
+        ORCHESTRATOR_CONFIG_FILE,
         None,
         None,
         Some(vec![mock_detector_server]),
@@ -805,7 +790,7 @@ async fn test_input_detector_returns_404() -> Result<(), anyhow::Error> {
     // Start orchestrator server and its dependencies
     let mock_detector_server = HttpMockServer::new(detector_name, detection_mocks)?;
     let orchestrator_server = TestOrchestratorServer::run(
-        ORCHESTRATOR_CONFIG_FILE_PATH,
+        ORCHESTRATOR_CONFIG_FILE,
         None,
         None,
         Some(vec![mock_detector_server]),
@@ -883,7 +868,7 @@ async fn test_input_detector_returns_500() -> Result<(), anyhow::Error> {
     // Start orchestrator server and its dependencies
     let mock_detector_server = HttpMockServer::new(detector_name, detection_mocks)?;
     let orchestrator_server = TestOrchestratorServer::run(
-        ORCHESTRATOR_CONFIG_FILE_PATH,
+        ORCHESTRATOR_CONFIG_FILE,
         None,
         None,
         Some(vec![mock_detector_server]),
@@ -957,7 +942,7 @@ async fn test_input_detector_returns_invalid_message() -> Result<(), anyhow::Err
     // Start orchestrator server and its dependencies
     let mock_detector_server = HttpMockServer::new(detector_name, detection_mocks)?;
     let orchestrator_server = TestOrchestratorServer::run(
-        ORCHESTRATOR_CONFIG_FILE_PATH,
+        ORCHESTRATOR_CONFIG_FILE,
         None,
         None,
         Some(vec![mock_detector_server]),
@@ -1011,7 +996,7 @@ async fn test_input_chunker_returns_an_error() -> Result<(), anyhow::Error> {
     // Add input chunker mock
     let chunker_id = CHUNKER_NAME_SENTENCE;
     let mut chunker_headers = HeaderMap::new();
-    chunker_headers.insert(CHUNKER_MODEL_ID_HEADER_NAME, chunker_id.parse()?);
+    chunker_headers.insert(CHUNKER_MODEL_HEADER, chunker_id.parse()?);
 
     let mut chunker_mocks = MockSet::new();
     chunker_mocks.insert(
@@ -1028,7 +1013,7 @@ async fn test_input_chunker_returns_an_error() -> Result<(), anyhow::Error> {
     // Start orchestrator server and its dependencies
     let mock_chunker_server = GrpcMockServer::new(chunker_id, chunker_mocks)?;
     let orchestrator_server = TestOrchestratorServer::run(
-        ORCHESTRATOR_CONFIG_FILE_PATH,
+        ORCHESTRATOR_CONFIG_FILE,
         None,
         None,
         None,
@@ -1094,10 +1079,7 @@ async fn test_generation_server_returns_an_error() -> Result<(), anyhow::Error> 
     // Add generation mock
     let model_id = "my-super-model-8B";
     let mut headers = HeaderMap::new();
-    headers.insert(
-        GENERATION_NLP_MODEL_ID_HEADER_NAME,
-        model_id.parse().unwrap(),
-    );
+    headers.insert(GENERATION_MODEL_HEADER, model_id.parse().unwrap());
 
     let mut generation_mocks = MockSet::new();
     generation_mocks.insert(
@@ -1116,7 +1098,7 @@ async fn test_generation_server_returns_an_error() -> Result<(), anyhow::Error> 
     let mock_detector_server = HttpMockServer::new(detector_name, detection_mocks)?;
     let generation_server = GrpcMockServer::new("nlp", generation_mocks)?;
     let orchestrator_server = TestOrchestratorServer::run(
-        ORCHESTRATOR_CONFIG_FILE_PATH,
+        ORCHESTRATOR_CONFIG_FILE,
         Some(generation_server),
         None,
         Some(vec![mock_detector_server]),
@@ -1166,7 +1148,7 @@ async fn test_request_with_extra_fields_returns_422() -> Result<(), anyhow::Erro
 
     // Run test orchestrator server
     let orchestrator_server =
-        TestOrchestratorServer::run(ORCHESTRATOR_CONFIG_FILE_PATH, None, None, None, None).await?;
+        TestOrchestratorServer::run(ORCHESTRATOR_CONFIG_FILE, None, None, None, None).await?;
 
     // Example orchestrator request with streaming response
     let response = orchestrator_server
@@ -1206,10 +1188,7 @@ async fn test_output_detector_sentence_chunker_no_detections() -> Result<(), any
     // Add generation mock
     let model_id = "my-super-model-8B";
     let mut headers = HeaderMap::new();
-    headers.insert(
-        GENERATION_NLP_MODEL_ID_HEADER_NAME,
-        model_id.parse().unwrap(),
-    );
+    headers.insert(GENERATION_MODEL_HEADER, model_id.parse().unwrap());
 
     let mut generation_mocks = MockSet::new();
     generation_mocks.insert(
@@ -1252,7 +1231,7 @@ async fn test_output_detector_sentence_chunker_no_detections() -> Result<(), any
     // Add output chunker mock
     let chunker_id = CHUNKER_NAME_SENTENCE;
     let mut chunker_headers = HeaderMap::new();
-    chunker_headers.insert(CHUNKER_MODEL_ID_HEADER_NAME, chunker_id.parse()?);
+    chunker_headers.insert(CHUNKER_MODEL_HEADER, chunker_id.parse()?);
 
     let mut chunker_mocks = MockSet::new();
     chunker_mocks.insert(
@@ -1342,7 +1321,7 @@ async fn test_output_detector_sentence_chunker_no_detections() -> Result<(), any
     let mock_detector_server = HttpMockServer::new(detector_name, detection_mocks)?;
     let generation_server = GrpcMockServer::new("nlp", generation_mocks)?;
     let orchestrator_server = TestOrchestratorServer::run(
-        ORCHESTRATOR_CONFIG_FILE_PATH,
+        ORCHESTRATOR_CONFIG_FILE,
         Some(generation_server),
         None,
         Some(vec![mock_detector_server]),
@@ -1403,10 +1382,7 @@ async fn test_output_detector_sentence_chunker_with_detections() -> Result<(), a
     // Add generation mock
     let model_id = "my-super-model-8B";
     let mut headers = HeaderMap::new();
-    headers.insert(
-        GENERATION_NLP_MODEL_ID_HEADER_NAME,
-        model_id.parse().unwrap(),
-    );
+    headers.insert(GENERATION_MODEL_HEADER, model_id.parse().unwrap());
 
     let mut generation_mocks = MockSet::new();
     generation_mocks.insert(
@@ -1449,7 +1425,7 @@ async fn test_output_detector_sentence_chunker_with_detections() -> Result<(), a
     // Add output chunker mock
     let chunker_id = CHUNKER_NAME_SENTENCE;
     let mut chunker_headers = HeaderMap::new();
-    chunker_headers.insert(CHUNKER_MODEL_ID_HEADER_NAME, chunker_id.parse()?);
+    chunker_headers.insert(CHUNKER_MODEL_HEADER, chunker_id.parse()?);
 
     let mut chunker_mocks = MockSet::new();
     chunker_mocks.insert(
@@ -1548,7 +1524,7 @@ async fn test_output_detector_sentence_chunker_with_detections() -> Result<(), a
     let mock_detector_server = HttpMockServer::new(detector_name, detection_mocks)?;
     let generation_server = GrpcMockServer::new("nlp", generation_mocks)?;
     let orchestrator_server = TestOrchestratorServer::run(
-        ORCHESTRATOR_CONFIG_FILE_PATH,
+        ORCHESTRATOR_CONFIG_FILE,
         Some(generation_server),
         None,
         Some(vec![mock_detector_server]),
@@ -1620,10 +1596,7 @@ async fn test_output_detector_returns_503() -> Result<(), anyhow::Error> {
     // Add generation mock
     let model_id = "my-super-model-8B";
     let mut headers = HeaderMap::new();
-    headers.insert(
-        GENERATION_NLP_MODEL_ID_HEADER_NAME,
-        model_id.parse().unwrap(),
-    );
+    headers.insert(GENERATION_MODEL_HEADER, model_id.parse().unwrap());
 
     let mut generation_mocks = MockSet::new();
     generation_mocks.insert(
@@ -1670,7 +1643,7 @@ async fn test_output_detector_returns_503() -> Result<(), anyhow::Error> {
     // Add output chunker mock
     let chunker_id = CHUNKER_NAME_SENTENCE;
     let mut chunker_headers = HeaderMap::new();
-    chunker_headers.insert(CHUNKER_MODEL_ID_HEADER_NAME, chunker_id.parse()?);
+    chunker_headers.insert(CHUNKER_MODEL_HEADER, chunker_id.parse()?);
 
     let mut chunker_mocks = MockSet::new();
     chunker_mocks.insert(
@@ -1768,7 +1741,7 @@ async fn test_output_detector_returns_503() -> Result<(), anyhow::Error> {
     let mock_detector_server = HttpMockServer::new(detector_name, detection_mocks)?;
     let generation_server = GrpcMockServer::new("nlp", generation_mocks)?;
     let orchestrator_server = TestOrchestratorServer::run(
-        ORCHESTRATOR_CONFIG_FILE_PATH,
+        ORCHESTRATOR_CONFIG_FILE,
         Some(generation_server),
         None,
         Some(vec![mock_detector_server]),
@@ -1845,10 +1818,7 @@ async fn test_output_detector_returns_404() -> Result<(), anyhow::Error> {
     // Add generation mock
     let model_id = "my-super-model-8B";
     let mut headers = HeaderMap::new();
-    headers.insert(
-        GENERATION_NLP_MODEL_ID_HEADER_NAME,
-        model_id.parse().unwrap(),
-    );
+    headers.insert(GENERATION_MODEL_HEADER, model_id.parse().unwrap());
 
     let mut generation_mocks = MockSet::new();
     generation_mocks.insert(
@@ -1895,7 +1865,7 @@ async fn test_output_detector_returns_404() -> Result<(), anyhow::Error> {
     // Add output chunker mock
     let chunker_id = CHUNKER_NAME_SENTENCE;
     let mut chunker_headers = HeaderMap::new();
-    chunker_headers.insert(CHUNKER_MODEL_ID_HEADER_NAME, chunker_id.parse()?);
+    chunker_headers.insert(CHUNKER_MODEL_HEADER, chunker_id.parse()?);
 
     let mut chunker_mocks = MockSet::new();
     chunker_mocks.insert(
@@ -1993,7 +1963,7 @@ async fn test_output_detector_returns_404() -> Result<(), anyhow::Error> {
     let mock_detector_server = HttpMockServer::new(detector_name, detection_mocks)?;
     let generation_server = GrpcMockServer::new("nlp", generation_mocks)?;
     let orchestrator_server = TestOrchestratorServer::run(
-        ORCHESTRATOR_CONFIG_FILE_PATH,
+        ORCHESTRATOR_CONFIG_FILE,
         Some(generation_server),
         None,
         Some(vec![mock_detector_server]),
@@ -2070,10 +2040,7 @@ async fn test_output_detector_returns_500() -> Result<(), anyhow::Error> {
     // Add generation mock
     let model_id = "my-super-model-8B";
     let mut headers = HeaderMap::new();
-    headers.insert(
-        GENERATION_NLP_MODEL_ID_HEADER_NAME,
-        model_id.parse().unwrap(),
-    );
+    headers.insert(GENERATION_MODEL_HEADER, model_id.parse().unwrap());
 
     let mut generation_mocks = MockSet::new();
     generation_mocks.insert(
@@ -2120,7 +2087,7 @@ async fn test_output_detector_returns_500() -> Result<(), anyhow::Error> {
     // Add output chunker mock
     let chunker_id = CHUNKER_NAME_SENTENCE;
     let mut chunker_headers = HeaderMap::new();
-    chunker_headers.insert(CHUNKER_MODEL_ID_HEADER_NAME, chunker_id.parse()?);
+    chunker_headers.insert(CHUNKER_MODEL_HEADER, chunker_id.parse()?);
 
     let mut chunker_mocks = MockSet::new();
     chunker_mocks.insert(
@@ -2219,7 +2186,7 @@ async fn test_output_detector_returns_500() -> Result<(), anyhow::Error> {
     let mock_detector_server = HttpMockServer::new(detector_name, detection_mocks)?;
     let generation_server = GrpcMockServer::new("nlp", generation_mocks)?;
     let orchestrator_server = TestOrchestratorServer::run(
-        ORCHESTRATOR_CONFIG_FILE_PATH,
+        ORCHESTRATOR_CONFIG_FILE,
         Some(generation_server),
         None,
         Some(vec![mock_detector_server]),

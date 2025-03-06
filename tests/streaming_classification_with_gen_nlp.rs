@@ -17,6 +17,7 @@
 
 use eventsource_stream::Eventsource;
 use std::collections::HashMap;
+use tokio::sync::OnceCell;
 
 use common::{
     chunker::{
@@ -85,32 +86,32 @@ pub mod common;
 // }
 // println!("{events:?}");
 
+static ONCE: OnceCell<TestOrchestratorServer> = OnceCell::const_new();
+
+async fn test_orchestrator_server() -> TestOrchestratorServer {
+    let generation_server = GrpcMockServer::new("nlp", MockSet::new()).unwrap();
+    TestOrchestratorServer::builder()
+        .config_path(ORCHESTRATOR_CONFIG_FILE)
+        .generation_server(generation_server)
+        .build()
+        .await
+        .unwrap()
+}
+
 /// Asserts that given a request with no detectors configured returns the text generated
 /// by the model.
 #[test(tokio::test)]
 async fn test_no_detectors() -> Result<(), anyhow::Error> {
+    let orchestrator_server = ONCE.get_or_init(test_orchestrator_server).await;
+    let mock_generation_server = orchestrator_server.generation_server.as_mut().unwrap();
+
     // Add generation mock
     let model_id = "my-super-model-8B";
     let mut headers = HeaderMap::new();
     headers.insert(GENERATION_MODEL_HEADER, model_id.parse().unwrap());
 
-    let expected_response = vec![
-        GeneratedTextStreamResult {
-            generated_text: "I".into(),
-            ..Default::default()
-        },
-        GeneratedTextStreamResult {
-            generated_text: " am".into(),
-            ..Default::default()
-        },
-        GeneratedTextStreamResult {
-            generated_text: " great!".into(),
-            ..Default::default()
-        },
-    ];
-
-    let mut mocks = MockSet::new();
-    mocks.insert(
+    mock_generation_server.mocks().clear();
+    mock_generation_server.mocks().insert(
         MockPath::post(GENERATION_NLP_STREAMING_ENDPOINT),
         Mock::new(
             MockRequest::pb(ServerStreamingTextGenerationTaskRequest {
@@ -118,19 +119,22 @@ async fn test_no_detectors() -> Result<(), anyhow::Error> {
                 ..Default::default()
             })
             .with_headers(headers.clone()),
-            MockResponse::pb_stream(expected_response.clone()),
+            MockResponse::pb_stream(vec![
+                GeneratedTextStreamResult {
+                    generated_text: "I".into(),
+                    ..Default::default()
+                },
+                GeneratedTextStreamResult {
+                    generated_text: " am".into(),
+                    ..Default::default()
+                },
+                GeneratedTextStreamResult {
+                    generated_text: " great!".into(),
+                    ..Default::default()
+                },
+            ]),
         ),
     );
-
-    // Configure mock servers
-    let generation_server = GrpcMockServer::new("nlp", mocks)?;
-
-    // Run test orchestrator server
-    let orchestrator_server = TestOrchestratorServer::builder()
-        .config_path(ORCHESTRATOR_CONFIG_FILE)
-        .generation_server(generation_server)
-        .build()
-        .await?;
 
     // Example orchestrator request with streaming response
     let response = orchestrator_server

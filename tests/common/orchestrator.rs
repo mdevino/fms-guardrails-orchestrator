@@ -112,10 +112,10 @@ impl TestOrchestratorServerBuilder {
         let mut config = OrchestratorConfig::load(self.config_path).await?;
 
         // Start & configure mock servers
-        initialize_generation_server(self.generation_server, &mut config).await?;
-        initialize_chat_generation_server(self.chat_generation_server, &mut config).await?;
-        initialize_detectors(self.detector_servers, &mut config).await?;
-        initialize_chunkers(self.chunker_servers, &mut config).await?;
+        initialize_generation_server(&self.generation_server, &mut config).await?;
+        initialize_chat_generation_server(&self.chat_generation_server, &mut config).await?;
+        initialize_detectors(&self.detector_servers, &mut config).await?;
+        initialize_chunkers(&self.chunker_servers, &mut config).await?;
 
         // Create & start test orchestrator server
         let port = self.port.unwrap_or_else(|| find_available_port().unwrap());
@@ -124,6 +124,11 @@ impl TestOrchestratorServerBuilder {
             .unwrap_or_else(|| find_available_port().unwrap());
         let mut server = TestOrchestratorServer::new(config, port, health_port);
         server.start().await?;
+
+        server.generation_server = self.generation_server;
+        server.chat_generation_server = self.chat_generation_server;
+        server.chunker_servers = self.chunker_servers;
+        server.detector_servers = self.detector_servers;
 
         Ok(server)
     }
@@ -137,6 +142,10 @@ pub struct TestOrchestratorServer {
     health_url: Url,
     client: reqwest::Client,
     _handle: Option<JoinHandle<Result<(), anyhow::Error>>>,
+    pub generation_server: Option<GrpcMockServer>,
+    pub chat_generation_server: Option<HttpMockServer>,
+    pub detector_servers: Option<Vec<HttpMockServer>>,
+    pub chunker_servers: Option<Vec<GrpcMockServer>>,
 }
 
 impl TestOrchestratorServer {
@@ -152,6 +161,10 @@ impl TestOrchestratorServer {
             health_url,
             client,
             _handle: None,
+            generation_server: None,
+            chat_generation_server: None,
+            detector_servers: None,
+            chunker_servers: None
         }
     }
 
@@ -206,7 +219,7 @@ impl TestOrchestratorServer {
 
 /// Starts and configures generation server.
 async fn initialize_generation_server(
-    generation_server: Option<GrpcMockServer>,
+    generation_server: &Option<GrpcMockServer>,
     config: &mut OrchestratorConfig,
 ) -> Result<(), anyhow::Error> {
     if let Some(generation_server) = generation_server {
@@ -218,7 +231,7 @@ async fn initialize_generation_server(
 
 /// Starts and configures chat generation server.
 async fn initialize_chat_generation_server(
-    chat_generation_server: Option<HttpMockServer>,
+    chat_generation_server: &Option<HttpMockServer>,
     config: &mut OrchestratorConfig,
 ) -> Result<(), anyhow::Error> {
     if let Some(chat_generation_server) = chat_generation_server {
@@ -231,7 +244,7 @@ async fn initialize_chat_generation_server(
 
 /// Starts and configures detector servers.
 async fn initialize_detectors(
-    detector_servers: Option<Vec<HttpMockServer>>,
+    detector_servers: &Option<Vec<HttpMockServer>>,
     config: &mut OrchestratorConfig,
 ) -> Result<(), anyhow::Error> {
     if let Some(detector_servers) = detector_servers {
@@ -250,7 +263,7 @@ async fn initialize_detectors(
 
 /// Starts and configures chunker servers.
 async fn initialize_chunkers(
-    chunker_servers: Option<Vec<GrpcMockServer>>,
+    chunker_servers: &Option<Vec<GrpcMockServer>>,
     config: &mut OrchestratorConfig,
 ) -> Result<(), anyhow::Error> {
     if let Some(chunker_servers) = chunker_servers {

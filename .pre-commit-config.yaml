@@ -3,5 +3,7 @@ repos:
     rev: v1.0
     hooks:
       - id: fmt
+        args: ["+nightly", "--all"]
       - id: cargo-check
       - id: clippy
+        args: ["--workspace", "--all-features"]

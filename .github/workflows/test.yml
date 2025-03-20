@@ -34,8 +34,8 @@ jobs:
         key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
     - name: Build
       run: cargo build --verbose
-    - name: Run formatter
-      run: cargo fmt --verbose
+    # - name: Run formatter
+    #   run: cargo fmt --verbose
     - name: Run linter
       run: cargo clippy --verbose
     - name: Run tests

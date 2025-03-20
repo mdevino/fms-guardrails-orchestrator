@@ -35,8 +35,8 @@ jobs:
     - name: Build
       run: cargo build --verbose
     # - name: Run formatter
-    #   run: cargo fmt --verbose
+    #   run: cargo fmt --verbose --check --all
     - name: Run linter
-      run: cargo clippy --verbose
+      run: cargo clippy --verbose --all-targets --all-features
     - name: Run tests
       run: cargo test --verbose

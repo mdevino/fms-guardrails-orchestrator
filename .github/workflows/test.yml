@@ -36,7 +36,7 @@ jobs:
     - name: Build
       run: cargo build --workspace
     - name: Run formatter
-      run: cargo fmt --check --all
+      run: cargo +nightly fmt --check --all
     - name: Run linter
       run: cargo clippy --no-deps --workspace --all-features
     - name: Run tests

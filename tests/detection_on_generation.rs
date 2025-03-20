@@ -318,8 +318,3 @@ async fn orchestrator_validation_error() -> Result<(), anyhow::Error> {
 
     Ok(())
 }
-
-#[test(tokio::test)]
-async fn silly_me() {
-    assert!(true);
-}

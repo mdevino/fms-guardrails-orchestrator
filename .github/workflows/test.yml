@@ -10,7 +10,7 @@ env:
   CARGO_TERM_COLOR: always
   RUSTFLAGS: "-Dwarnings" # Makes CI fail on compilation/clippy warnings
   PROTOC_VERSION: "26.0"
-  CARGO_INCREMENTAL: 1
+  CARGO_INCREMENTAL: 0
 
 jobs:
   build:

@@ -23,7 +23,7 @@ use tracing::{error, warn};
 #[derive(Parser, Debug, Clone)]
 #[clap(author, version, about, long_about = None)]
 pub struct Args {
-    #[clap(default_value = "8033", long, env)]
+    #[clap(default_value = "8032", long, env)]
     pub http_port: u16,
     #[clap(default_value = "8034", long, env)]
     pub health_http_port: u16,

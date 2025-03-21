@@ -36,7 +36,7 @@ jobs:
           target
         key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
     - name: Build
-      run: cargo build --workspace
+      run: cargo build --workspace --tests
     - name: Run formatter
       run: cargo +nightly fmt --check --all
     - name: Run linter

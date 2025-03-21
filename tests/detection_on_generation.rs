@@ -318,5 +318,3 @@ async fn orchestrator_validation_error() -> Result<(), anyhow::Error> {
 
     Ok(())
 }
-}
-

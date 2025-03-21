@@ -19,7 +19,9 @@ jobs:
 
     steps:
     - name: "Install fmt nightly"
-      run: rustup component add --toolchain nightly-x86_64-unknown-linux-gnu rustfmt
+      run: |
+        rustup toolchain install stable --profile minimal
+        rustup component add --toolchain nightly-x86_64-unknown-linux-gnu rustfmt
     - name: "Install protoc"
       run: |
         echo "protoc version: ${PROTOC_VERSION}"

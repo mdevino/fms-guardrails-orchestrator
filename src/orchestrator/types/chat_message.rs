@@ -14,7 +14,7 @@
  limitations under the License.
 
 */
-use crate::clients::openai;
+use crate::clients::openai::{self, ContentType};
 
 /// A chat message.
 #[derive(Default, Clone, Debug, PartialEq)]
@@ -39,11 +39,19 @@ pub trait ChatMessageIterator {
 impl ChatMessageIterator for openai::ChatCompletionsRequest {
     fn messages(&self) -> impl Iterator<Item = ChatMessage> {
         self.messages.iter().enumerate().map(|(index, message)| {
-            let text = if let Some(openai::Content::Text(text)) = &message.content {
-                Some(text.as_str())
-            } else {
-                None
-            };
+            let text = match &message.content {
+                Some(openai::Content::Text(text)) => {
+                    Some(text.as_str())
+                },
+                Some(openai::Content::Array(parts)) 
+                        if parts.iter().all(|part| part.r#type == ContentType::Text) => {
+                    Some(parts.iter()
+                        .map(|part| part.text.clone().unwrap_or("".into()))
+                        .collect::<Vec<String>>().join(" ")
+                        .as_str())
+                },
+                Some(openai::Content::Array(_)) | None => None,
+            }
             ChatMessage {
                 index: index as u32,
                 role: Some(&message.role),

@@ -5,13 +5,14 @@ ARG CONFIG_FILE=config/config.yaml
 
 ## Rust builder ################################################################
 # Specific debian version so that compatible glibc version is used
-FROM rust:1 AS rust-builder
+FROM registry.access.redhat.com/ubi9/ubi AS rust-builder
 ARG PROTOC_VERSION
 
 ENV CARGO_REGISTRIES_CRATES_IO_PROTOCOL=sparse
 
 # Install protoc, no longer included in prost crate
-RUN cd /tmp && \
+RUN dnf install -y --disableplugin=subscription-manager unzip gcc openssl-devel && \
+    cd /tmp && \
     curl -L -O https://github.com/protocolbuffers/protobuf/releases/download/v${PROTOC_VERSION}/protoc-${PROTOC_VERSION}-linux-x86_64.zip && \
     unzip protoc-*.zip -d /usr/local && rm protoc-*.zip
 ENV LIBCLANG_PATH=/usr/lib/llvm-14/lib/
@@ -20,7 +21,11 @@ WORKDIR /app
 
 COPY rust-toolchain.toml rust-toolchain.toml
 
-RUN rustup component add rustfmt
+# Install rust toolchain version defined in rust-toolchain.toml
+RUN curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- --default-toolchain none -y && \
+    . "$HOME/.cargo/env" && \
+    rustup install && \
+    rustup component add rustfmt
 
 ## Orchestrator builder #########################################################
 FROM rust-builder AS fms-guardrails-orchestr8-builder
@@ -35,10 +40,10 @@ COPY tests/ /app/tests/
 WORKDIR /app
 
 # TODO: Make releases via cargo-release
-RUN cargo build --release
+RUN . "$HOME/.cargo/env" && cargo build --release
 # Copy test resources required for executing unit tests
 COPY tests/resources /app/tests/resources
-RUN cargo test
+RUN . "$HOME/.cargo/env" && cargo test
 
 ## Release Image ################################################################
 

@@ -134,19 +134,7 @@ async fn handle_input_detection(
         }
     };
     if !detections.is_empty() {
-        // Get prompt tokens for usage
-        let client = ctx.clients.get::<OpenAiClient>("openai").unwrap();
-        let tokenize_request = TokenizeRequest {
-            model: model_id.clone(),
-            prompt: Some(input_text),
-            ..Default::default()
-        };
-        let tokenize_response =
-            common::tokenize_openai(client, task.headers.clone(), tokenize_request).await?;
-        let usage = Usage {
-            prompt_tokens: tokenize_response.count,
-            ..Default::default()
-        };
+        let usage = Usage::default();
 
         // Build chat completion with input detections
         let chat_completion = ChatCompletion {
